@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: hireke
+    env: node
+    plan: free
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      - key: PALPLUS_MOCK
+        value: "true"
+      - key: STORAGE_PROVIDER
+        value: local
+      - key: DB_PATH
+        value: /tmp/hireke.db

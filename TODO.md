@@ -1,0 +1,4 @@
+- [ ] Implement Admins view: show only admin accounts when clicking “Admins”, with action buttons: Reset Password + Change Email
+- [ ] Add backend endpoint: PUT /api/admin/users/:userId/email to change an admin email (validate format + uniqueness)
+- [ ] Wire frontend button “Change Email” to backend endpoint and refresh admins list
+- [ ] Test end-to-end by running server and clicking “Admins”

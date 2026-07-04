@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <base href="/" />
+  <meta name="description" content="HireKe - Opportunity dashboard for jobs, scholarships, grants, tenders, fellowships, training, and remote work." />
+  <title>HireKe | Opportunity Dashboard</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css" />
+</head>
+<body class="hk-home">
+  <div id="modal-backdrop" class="modal-backdrop hidden"></div>
+  <button id="sidebar-wake-btn" class="hk-sidebar-wake hidden" type="button" aria-controls="homepage-sidebar" aria-expanded="false">
+    <i class="fa-solid fa-bars"></i>
+    <span>Menu</span>
+  </button>
+
+  <aside id="homepage-sidebar" class="hk-sidebar" aria-label="Primary navigation">
+    <a class="hk-brand" href="/">
+      <img src="hireke-logo.png" alt="HireKe logo" />
+      <small>Never miss your next opportunity.</small>
+    </a>
+
+    <nav class="hk-nav">
+      <a class="active" href="#" data-nav-view="dashboard"><i class="fa-solid fa-house"></i><span>Home</span></a>
+      <a href="#" data-nav-view="opportunities"><i class="fa-regular fa-briefcase"></i><span>Opportunities</span></a>
+      <a href="#" data-nav-view="companies"><i class="fa-regular fa-building"></i><span>Companies</span></a>
+      <a href="#" data-nav-view="saved" data-requires-auth><i class="fa-regular fa-bookmark"></i><span>Saved</span></a>
+      <a href="#" data-nav-view="applications" data-requires-auth><i class="fa-regular fa-square-check"></i><span>Applications</span></a>
+      <a href="#" data-nav-view="profile" data-requires-auth><i class="fa-regular fa-user"></i><span>My Profile</span><strong id="sidebar-profile-score">0%</strong></a>
+      <a href="#" data-nav-view="assistant" data-requires-auth><i class="fa-solid fa-wand-magic-sparkles"></i><span>AI Matching</span></a>
+      <a href="#" data-nav-view="messages" data-requires-auth><i class="fa-regular fa-envelope"></i><span>Inbox</span><strong id="sidebar-inbox-count">0</strong></a>
+      <a href="#" data-nav-view="alerts" data-requires-auth><i class="fa-regular fa-bell"></i><span>Notifications</span><strong id="sidebar-alert-count">0</strong></a>
+      <a href="#" data-nav-view="skills" data-requires-auth><i class="fa-solid fa-list-check"></i><span>Skills</span></a>
+      <a href="#" data-nav-view="experience" data-requires-auth><i class="fa-solid fa-briefcase"></i><span>Experience</span></a>
+      <a href="#" data-nav-view="education" data-requires-auth><i class="fa-solid fa-graduation-cap"></i><span>Education</span></a>
+    </nav>
+
+    <div class="hk-nav hk-nav-bottom">
+      <a href="#" data-nav-view="settings"><i class="fa-solid fa-gear"></i><span>Settings</span></a>
+      <a href="#" data-nav-view="help"><i class="fa-regular fa-circle-question"></i><span>Help & Support</span></a>
+      <a href="#" id="sidebar-login"><i class="fa-solid fa-arrow-right-to-bracket"></i><span>Log In</span></a>
+      <a href="#" id="sidebar-signup"><i class="fa-solid fa-user-plus"></i><span>Sign Up</span></a>
+    </div>
+
+  </aside>
+
+  <header class="hk-mobile-header" aria-label="Mobile header">
+    <button id="mobile-menu-btn" type="button" aria-controls="homepage-sidebar" aria-expanded="false"><i class="fa-solid fa-bars"></i></button>
+    <a class="hk-mobile-brand" href="/"><img src="hireke-logo.png" alt="HireKe logo" /></a>
+      <div>
+      <button id="mobile-theme-toggle" class="hk-icon-toggle" type="button" aria-label="Switch to dark mode"><i class="fa-regular fa-moon"></i></button>
+      <button id="mobile-alerts-btn" type="button" aria-label="Notifications"><i class="fa-regular fa-bell"></i><span id="mobile-alert-count">0</span></button>
+      <button id="mobile-inbox-btn" type="button" aria-label="Inbox"><i class="fa-regular fa-envelope"></i><span id="mobile-inbox-count">0</span></button>
+    </div>
+  </header>
+
+  <main class="hk-shell">
+    <header class="hk-topbar">
+      <form id="home-search-form" class="hk-search">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input id="home-search-input" type="search" placeholder="Search opportunities..." autocomplete="off" />
+        <button type="submit" aria-label="Search"><span>Search</span><kbd>K</kbd></button>
+      </form>
+
+      <div class="hk-account">
+        <button id="theme-toggle" class="hk-icon-toggle" type="button" aria-label="Switch to dark mode"><i class="fa-regular fa-moon"></i></button>
+        <button id="alerts-top-btn" type="button" aria-label="Alerts"><i class="fa-regular fa-bell"></i><span id="top-alert-count">0</span></button>
+        <button id="inbox-top-btn" class="hk-inbox-button" type="button" aria-label="Inbox"><i class="fa-regular fa-envelope"></i><span>Inbox</span><strong id="top-inbox-count">0</strong></button>
+        <button id="loginBtn" class="hk-link-btn" type="button">Log In</button>
+        <button id="signupBtn" class="hk-primary-small" type="button">Sign Up</button>
+        <button id="profileBtn" class="hk-user-chip hidden" type="button">
+          <span id="user-avatar">G</span>
+          <span><strong id="user-display-name">Guest</strong><small id="user-display-role">Visitor</small></span>
+          <i class="fa-solid fa-chevron-down"></i>
+        </button>
+        <div id="account-menu" class="hk-account-menu-popover hidden">
+          <button type="button" id="open-profile-menu-btn"><i class="fa-regular fa-user"></i>Profile</button>
+          <button type="button" id="logout-menu-btn"><i class="fa-solid fa-arrow-right-from-bracket"></i>Logout</button>
+        </div>
+      </div>
+    </header>
+
+    <section class="hk-search-panel" aria-label="Opportunity filters">
+      <button id="search-filters-toggle" class="hk-filter-toggle" type="button" aria-expanded="true" aria-controls="search-filters-body">
+        <span>What are you looking for?</span>
+        <i class="fa-solid fa-chevron-down"></i>
+      </button>
+      <div id="search-filters-body" class="hk-filter-body is-open">
+        <div class="hk-type-options" aria-label="Opportunity types">
+          <button type="button" data-opportunity-type="Jobs"><i class="fa-solid fa-briefcase"></i><span>Jobs</span></button>
+          <button type="button" data-opportunity-type="Internships"><i class="fa-solid fa-graduation-cap"></i><span>Internships</span></button>
+          <button type="button" data-opportunity-type="Scholarships"><i class="fa-regular fa-star"></i><span>Scholarships</span></button>
+          <button type="button" data-opportunity-type="Grants"><i class="fa-solid fa-gift"></i><span>Grants</span></button>
+          <button type="button" data-opportunity-type="Tenders"><i class="fa-regular fa-file-lines"></i><span>Tenders</span></button>
+          <button type="button" data-opportunity-type="Fellowships"><i class="fa-solid fa-user-group"></i><span>Fellowships</span></button>
+          <button type="button" data-opportunity-type="Competitions"><i class="fa-solid fa-trophy"></i><span>Competitions</span></button>
+          <button type="button" data-opportunity-type="More"><i class="fa-solid fa-ellipsis"></i><span>More</span></button>
+        </div>
+        <div class="hk-filter-controls">
+          <label><i class="fa-solid fa-location-dot"></i><select id="filter-location"><option value="">Location</option></select></label>
+          <label><i class="fa-solid fa-table-cells-large"></i><select id="filter-category"><option value="">Category</option></select></label>
+          <label><i class="fa-solid fa-chart-simple"></i><select id="filter-experience"><option value="">Experience Level</option><option>Entry Level</option><option>Mid Level</option><option>Senior Level</option></select></label>
+          <label><i class="fa-solid fa-briefcase"></i><select id="filter-type"><option value="">Type</option></select></label>
+          <button id="filter-search-btn" type="button">Search</button>
+        </div>
+      </div>
+    </section>
+
+    <nav class="hk-mobile-bottom-nav" aria-label="Mobile navigation">
+      <a class="active" href="#" data-nav-view="dashboard"><i class="fa-solid fa-house"></i><span>Home</span></a>
+      <a href="#" data-nav-view="opportunities"><i class="fa-regular fa-briefcase"></i><span>Opportunities</span></a>
+      <a href="#" data-nav-view="saved" data-requires-auth><i class="fa-regular fa-bookmark"></i><span>Saved</span></a>
+      <a href="#" data-nav-view="messages" data-requires-auth><i class="fa-regular fa-envelope"></i><span>Inbox</span><strong id="mobile-bottom-inbox-count">0</strong></a>
+      <a href="#" data-nav-view="profile" data-requires-auth><i class="fa-regular fa-user"></i><span>Profile</span></a>
+    </nav>
+
+    <div class="hk-view-section" data-view-section="dashboard">
+    <section class="hk-home-grid">
+      <div class="hk-home-main">
+        <article class="hk-welcome hk-panel">
+          <div class="hk-welcome-copy">
+            <h1 id="welcome-title">Good morning! Find your next opportunity.</h1>
+            <p id="welcome-subtitle">Explore opportunities and take the next step in your career.</p>
+            <button type="button" class="hk-secondary-btn" id="home-create-profile-btn" data-signup-cta><i class="fa-solid fa-user-plus"></i>Create Profile</button>
+          </div>
+          <div class="hk-stat-row">
+            <div><i class="fa-regular fa-file-lines"></i><strong id="home-applications-count">0</strong><span>Applications</span></div>
+            <div><i class="fa-regular fa-calendar-check"></i><strong id="home-interviews-count">0</strong><span>Interviews</span></div>
+            <div><i class="fa-solid fa-bookmark"></i><strong id="home-saved-count">0</strong><span>Saved</span></div>
+            <div><i class="fa-solid fa-circle-notch"></i><strong id="home-profile-strength">0%</strong><span>Profile Strength</span></div>
+          </div>
+          <div class="hk-welcome-art" aria-hidden="true">
+            <span></span><span></span><span></span><span></span>
+          </div>
+        </article>
+
+        <article class="hk-panel" id="recommended-panel">
+          <div class="hk-panel-head">
+            <h2>Recommended for You</h2>
+            <button type="button" data-view-all="recommended-list">View all</button>
+          </div>
+          <div id="recommended-list" class="hk-opportunity-list"></div>
+          <button id="view-more-opportunities" class="hk-view-more" type="button">View more opportunities <i class="fa-solid fa-arrow-right"></i></button>
+        </article>
+      </div>
+
+      <aside class="hk-right-rail">
+        <article class="hk-panel hk-inbox-preview">
+          <div class="hk-panel-head">
+            <h2>Inbox</h2>
+            <button type="button" data-nav-view="messages" data-requires-auth>See all</button>
+          </div>
+          <div id="inbox-preview-list" class="hk-inbox-list"></div>
+        </article>
+
+        <article class="hk-panel hk-employer-card">
+          <h3>Get Noticed by Top Employers</h3>
+          <p>Complete your profile and stand out from the crowd.</p>
+        </article>
+      </aside>
+    </section>
+    </div>
+
+    <section class="hk-view-section hidden" data-view-section="opportunities">
+      <article class="hk-panel">
+        <div class="hk-panel-head hk-tabs-head">
+          <div class="hk-tabs" role="tablist" aria-label="Opportunity views">
+            <button class="active" type="button" data-tab="new">New Opportunities</button>
+            <button type="button" data-tab="trending">Trending</button>
+            <button type="button" data-tab="expiring">Expiring Soon</button>
+          </div>
+          <button type="button" data-view-all="tab-opportunity-list">View all</button>
+        </div>
+        <div id="standalone-opportunity-list" class="hk-opportunity-list"></div>
+      </article>
+    </section>
+
+    <section class="hk-view-section hidden" data-view-section="saved">
+      <article class="hk-panel">
+        <div class="hk-panel-head"><h2>Saved Opportunities</h2></div>
+        <div id="saved-opportunities-list" class="hk-opportunity-list"></div>
+      </article>
+    </section>
+
+    <section class="hk-view-section hidden" data-view-section="companies">
+      <article class="hk-panel">
+        <div class="hk-panel-head"><h2>Companies</h2></div>
+        <div id="companies-list" class="hk-category-grid"></div>
+      </article>
+    </section>
+
+    <section class="hk-view-section hidden" data-view-section="applications">
+      <article class="hk-panel">
+        <div class="hk-panel-head"><h2>Applications</h2></div>
+        <div id="applications-list" class="hk-activity-list"></div>
+      </article>
+    </section>
+
+    <section class="hk-view-section hidden" data-view-section="messages">
+      <article class="hk-panel">
+        <div class="hk-panel-head"><h2>Messages</h2><button type="button" id="messages-refresh-btn" class="secondary-btn">Refresh</button></div>
+        <div id="messages-list" class="hk-activity-list"></div>
+        <div id="conversation-view" class="hk-entry-list"></div>
+      </article>
+    </section>
+
+    <section class="hk-view-section hidden" data-view-section="alerts">
+      <article class="hk-panel">
+        <div class="hk-panel-head"><h2>Alerts</h2></div>
+        <div id="all-alerts-list" class="hk-alert-list"></div>
+      </article>
+    </section>
+
+    <section class="hk-view-section hidden" data-view-section="profile">
+      <article class="hk-panel">
+        <div class="hk-panel-head"><h2>Profile Builder</h2></div>
+        <div class="hk-tips-list">
+          <button type="button" data-profile-cta><i class="fa-regular fa-circle-check"></i>Update your skills and profile details<i class="fa-solid fa-chevron-right"></i></button>
+          <button type="button" data-profile-cta><i class="fa-regular fa-circle-check"></i>Upload your CV for better recommendations<i class="fa-solid fa-chevron-right"></i></button>
+          <button type="button" data-profile-cta><i class="fa-regular fa-circle-check"></i>Keep your work experience current<i class="fa-solid fa-chevron-right"></i></button>
+        </div>
+      </article>
+    </section>
+
+    <section class="hk-view-section hidden" data-view-section="skills">
+      <article class="hk-panel">
+        <div class="hk-panel-head"><h2>Skills</h2><button type="button" data-profile-cta data-profile-section-target="skills">Edit</button></div>
+        <div id="profile-page-skills" class="hk-chip-row"></div>
+      </article>
+    </section>
+
+    <section class="hk-view-section hidden" data-view-section="experience">
+      <article class="hk-panel">
+        <div class="hk-panel-head"><h2>Experience</h2><button type="button" data-profile-cta data-profile-section-target="experience">Edit</button></div>
+        <div id="profile-page-experience" class="hk-entry-list"></div>
+      </article>
+    </section>
+
+    <section class="hk-view-section hidden" data-view-section="education">
+      <article class="hk-panel">
+        <div class="hk-panel-head"><h2>Education</h2><button type="button" data-profile-cta data-profile-section-target="education">Edit</button></div>
+        <div id="profile-page-education" class="hk-entry-list"></div>
+      </article>
+    </section>
+
+    <section class="hk-view-section hidden" data-view-section="public-profile">
+      <article class="hk-panel hk-public-profile">
+        <div class="hk-public-profile-head">
+          <div id="public-profile-avatar" class="hk-profile-photo">H</div>
+          <div>
+            <h2 id="public-profile-name">Profile</h2>
+            <p id="public-profile-headline">HireKe profile</p>
+            <small id="public-profile-location">Kenya</small>
+          </div>
+          <div class="hk-public-profile-actions">
+            <button id="public-connect-btn" type="button" class="primary-btn loading-btn hidden"><span class="btn-label">Connect</span><span class="btn-spinner" aria-hidden="true"></span></button>
+            <button id="public-message-btn" type="button" class="secondary-btn hidden" disabled>Message</button>
+          </div>
+        </div>
+        <div class="hk-public-profile-grid">
+          <section><h3>About</h3><p id="public-profile-about" class="hk-profile-text-block">No profile summary yet.</p></section>
+          <section><h3>Experience</h3><div id="public-profile-experience" class="hk-entry-list"></div></section>
+          <section><h3>Education</h3><div id="public-profile-education" class="hk-entry-list"></div></section>
+        </div>
+      </article>
+    </section>
+
+    <section class="hk-view-section hidden" data-view-section="assistant">
+      <article class="hk-panel">
+        <div class="hk-panel-head">
+          <h2>Best Matches for You</h2>
+          <button type="button" id="refresh-ai-matches"><i class="fa-solid fa-rotate"></i> Refresh</button>
+        </div>
+        <div id="ai-matches-list" class="hk-opportunity-list"></div>
+      </article>
+    </section>
+
+    <section class="hk-view-section hidden" data-view-section="documents">
+      <article class="hk-panel">
+        <div class="hk-panel-head"><h2>CV & Documents</h2><label class="secondary-btn hk-upload-cv"><i class="fa-solid fa-upload"></i>Upload CV<input id="profile-cv-page" type="file" accept=".pdf,.doc,.docx,.txt" /></label></div>
+        <div id="profile-page-documents" class="hk-document-list"></div>
+      </article>
+    </section>
+
+    <section class="hk-view-section hidden" data-view-section="premium">
+      <article class="hk-panel">
+        <div class="hk-panel-head"><h2>User Verification Badge</h2><span id="verification-current-status">Not verified</span></div>
+        <p class="hk-premium-intro">Build trust with recruiters and opportunity owners. Choose a verification level, submit your details, and pay paid plans through PalPlus M-Pesa STK Push.</p>
+        <div class="hk-verification-plans">
+          <label><input type="radio" name="verification-plan" value="standard" checked /><strong>Standard</strong><span>FREE</span><small>Review in 1-3 business days</small></label>
+          <label><input type="radio" name="verification-plan" value="express" /><strong>Express</strong><span>KES 500</span><small>24-hour verification queue</small></label>
+          <label><input type="radio" name="verification-plan" value="premium_monthly" /><strong>Premium</strong><span>KES 999/month</span><small>Premium badge, priority trust features, monthly renewal</small></label>
+          <label><input type="radio" name="verification-plan" value="premium_annual" /><strong>Premium Annual</strong><span>KES 9,999/year</span><small>Annual premium badge and priority trust features</small></label>
+        </div>
+        <form id="verification-upgrade-form" class="hk-verification-form">
+          <div class="input-group"><label for="verification-phone">M-Pesa Phone</label><input id="verification-phone" type="tel" placeholder="07XX XXX XXX" /></div>
+          <div class="input-group"><label for="verification-notes">Notes</label><textarea id="verification-notes" placeholder="Add any context for the verification team"></textarea></div>
+          <div class="input-group"><label for="verification-documents">Supporting Documents</label><input id="verification-documents" type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" /></div>
+          <button type="submit" class="primary-btn">Start Verification</button>
+          <p id="verification-upgrade-status" class="hk-form-status"></p>
+        </form>
+      </article>
+    </section>
+
+    <section class="hk-view-section hidden" data-view-section="settings">
+      <article class="hk-panel hk-settings-panel">
+        <div class="hk-panel-head"><h2>Settings</h2><span id="settings-current-label">My Account</span></div>
+        <div class="hk-settings-layout">
+          <nav class="hk-settings-menu" aria-label="Settings sections">
+            <button type="button" class="active" data-settings-section="account"><i class="fa-regular fa-user"></i>My Account</button>
+            <button type="button" data-settings-section="security"><i class="fa-solid fa-shield-halved"></i>Security</button>
+            <button type="button" data-settings-section="privacy"><i class="fa-solid fa-lock"></i>Privacy</button>
+            <button type="button" data-settings-section="opportunities"><i class="fa-solid fa-sliders"></i>Opportunity Preferences</button>
+            <button type="button" data-settings-section="notifications"><i class="fa-regular fa-bell"></i>Notifications</button>
+            <button type="button" data-settings-section="documents"><i class="fa-regular fa-file-lines"></i>Documents</button>
+            <button type="button" data-settings-section="networking"><i class="fa-solid fa-user-group"></i>Networking</button>
+            <button type="button" data-settings-section="applications"><i class="fa-regular fa-square-check"></i>Applications</button>
+            <button type="button" data-settings-section="recruiter"><i class="fa-solid fa-briefcase"></i>Recruiter Preferences</button>
+            <button type="button" data-settings-section="verification"><i class="fa-solid fa-circle-check"></i>Verification</button>
+            <button type="button" data-settings-section="appearance"><i class="fa-regular fa-sun"></i>Appearance</button>
+            <button type="button" data-settings-section="connected"><i class="fa-solid fa-link"></i>Connected Accounts</button>
+            <button type="button" data-settings-section="data"><i class="fa-solid fa-database"></i>Data & Privacy</button>
+            <button type="button" data-settings-section="billing"><i class="fa-solid fa-credit-card"></i>Billing</button>
+          </nav>
+          <div class="hk-settings-content">
+            <section data-settings-panel="account">
+              <div class="hk-settings-grid">
+                <div><small>Name</small><strong id="settings-name">Not signed in</strong></div>
+                <div><small>Email</small><strong id="settings-email">Not signed in</strong></div>
+                <div><small>Account Type</small><strong id="settings-role">Visitor</strong></div>
+                <button type="button" class="secondary-btn" data-profile-cta>Edit Profile</button>
+              </div>
+            </section>
+            <section class="hidden" data-settings-panel="security"><h3>Security</h3><p>Password reset and sign-in protection use your verified email. Coming Soon: device history and two-factor authentication.</p><button type="button" id="settings-password-reset" class="secondary-btn">Send Password Reset</button></section>
+            <section class="hidden" data-settings-panel="privacy"><h3>Privacy</h3><p>Your public profile shows your headline, about, education, and experience. Private contact details remain hidden.</p></section>
+            <section class="hidden" data-settings-panel="opportunities"><h3>Opportunity Preferences</h3><p>Use profile skills, location, and career goals to tune recommendations.</p><button type="button" class="secondary-btn" data-profile-cta>Edit Preferences</button></section>
+            <section class="hidden" data-settings-panel="notifications"><h3>Notifications</h3><div id="settings-notifications-list" class="hk-alert-list"></div></section>
+            <section class="hidden" data-settings-panel="documents"><h3>Documents</h3><div id="settings-documents-list" class="hk-document-list"></div></section>
+            <section class="hidden" data-settings-panel="networking"><h3>Networking</h3><div class="hk-network-grid"><div><h4>Pending Requests</h4><div id="network-requests-list" class="hk-entry-list"></div></div><div><h4>Connections</h4><div id="network-connections-list" class="hk-entry-list"></div></div></div></section>
+            <section class="hidden" data-settings-panel="applications"><h3>Applications</h3><div id="settings-applications-list" class="hk-activity-list"></div></section>
+            <section class="hidden" data-settings-panel="recruiter"><h3>Recruiter Preferences</h3><p>Recruiter tools are available from the recruiter dashboard. Coming Soon: recruiter contact rules from this settings page.</p></section>
+            <section class="hidden" data-settings-panel="verification"><h3>Verification</h3><p id="settings-verification-status">Not verified</p><button type="button" class="secondary-btn" data-open-premium>Manage Verification</button></section>
+            <section class="hidden" data-settings-panel="appearance">
+              <h3>Appearance</h3>
+              <label class="hk-theme-switch">
+                <span><i class="fa-regular fa-moon"></i> Dark mode</span>
+                <input id="settings-theme-toggle" type="checkbox" />
+              </label>
+            </section>
+            <section class="hidden" data-settings-panel="connected"><h3>Connected Accounts</h3><p>Google, GitHub, and Facebook sign-in options are shown on the login screen. Coming Soon: account linking management.</p></section>
+            <section class="hidden" data-settings-panel="data"><h3>Data & Privacy</h3><p>Your profile, documents, applications, and connections are stored for your HireKe account. Coming Soon: export and deletion request tools.</p></section>
+            <section class="hidden" data-settings-panel="billing"><h3>Billing</h3><p>Billing and payment records are managed through verification and recruiter payment flows.</p></section>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section class="hk-view-section hidden" data-view-section="help">
+      <article class="hk-panel">
+        <div class="hk-panel-head"><h2>Contact Me</h2></div>
+        <form id="support-contact-form" class="hk-support-form">
+          <div class="input-group"><label for="support-name">Full Name</label><input id="support-name" type="text" placeholder="Your full name" required /></div>
+          <div class="input-group"><label for="support-email">Email Address</label><input id="support-email" type="email" placeholder="you@example.com" required /></div>
+          <div class="input-group"><label for="support-subject">Subject</label><input id="support-subject" type="text" placeholder="How can we help?" required /></div>
+          <div class="input-group"><label for="support-message">Message</label><textarea id="support-message" placeholder="Tell us what you need help with..." required></textarea></div>
+          <button id="support-contact-submit" type="submit" class="primary-btn loading-btn"><span class="btn-label">Send Message</span><span class="btn-spinner" aria-hidden="true"></span></button>
+          <p id="support-contact-status" class="hk-form-status" role="status" aria-live="polite"></p>
+        </form>
+      </article>
+    </section>
+  </main>
+
+  <div id="role-modal" class="modal auth-experience hidden">
+    <div class="modal-panel role-auth-panel">
+      <div class="modal-panel-header"><button id="role-close" class="modal-close" type="button">&times;</button></div>
+      <div class="modal-header"><h2>Sign up as</h2><p>Choose your role to continue creating an account.</p></div>
+      <div class="role-grid">
+        <button type="button" class="role-card" data-role="recruiter"><i class="fa-solid fa-briefcase"></i><h3>Recruiter</h3><p>Post jobs, manage candidates, and hire top talent.</p></button>
+        <button type="button" class="role-card" data-role="jobseeker"><i class="fa-solid fa-user-check"></i><h3>Job Seeker</h3><p>Search verified opportunities and apply with confidence.</p></button>
+      </div>
+    </div>
+  </div>
+
+  <div id="auth-modal" class="modal auth-experience hidden">
+    <div class="modal-panel auth-glass-panel">
+      <div class="modal-panel-header">
+        <button id="auth-back" class="modal-back-btn hidden" type="button">Back</button>
+        <button id="auth-cancel" class="modal-close" type="button">&times;</button>
+      </div>
+      <div class="modal-header auth-brand-header">
+        <img src="hireke-logo.png" alt="HireKe logo" />
+        <h2 id="auth-title">Welcome back</h2>
+        <p id="auth-subtitle">Log in to continue to HireKe.</p>
+      </div>
+      <form id="auth-form" data-mode="login">
+        <div class="input-group"><label for="auth-email">Email address</label><input id="auth-email" type="email" placeholder="you@example.com" required /></div>
+        <div class="input-group password-group">
+          <label for="auth-password">Password</label>
+          <div class="password-wrap"><input id="auth-password" type="password" placeholder="Enter your password" required /><button type="button" id="toggleAuthPassword" class="password-toggle" aria-label="Show password"><i class="fa-solid fa-eye"></i></button></div>
+        </div>
+        <button type="button" id="forgot-password-link" class="forgot-password-link">Forgot password?</button>
+        <div id="auth-privacy-container" class="toggle-row hidden"><input id="auth-privacy-agree" type="checkbox" /><label for="auth-privacy-agree">I agree to the Data Protection & Privacy Policy.</label></div>
+        <div id="auth-marketing-container" class="toggle-row hidden"><input id="auth-marketing-optin" type="checkbox" /><label for="auth-marketing-optin">Send me career tips and opportunity updates.</label></div>
+        <div id="auth-county-container" class="input-group hidden"><label for="auth-county">County</label><input id="auth-county" type="text" placeholder="Nairobi" /></div>
+        <div id="auth-industry-container" class="input-group hidden"><label for="auth-industry">Industry</label><input id="auth-industry" type="text" placeholder="ICT, finance, construction..." /></div>
+        <div id="auth-company-container" class="input-group hidden"><label for="auth-company">Company Name</label><input id="auth-company" type="text" placeholder="Your company" /></div>
+        <button type="submit" id="auth-submit-btn" class="primary-btn loading-btn"><span class="btn-label">Continue</span><span class="btn-spinner" aria-hidden="true"></span></button>
+        <div class="auth-divider"><span>or continue with</span></div>
+        <div class="social-auth-row" aria-label="Social sign in options">
+          <button type="button" class="social-auth-btn" data-social-provider="google" aria-label="Continue with Google"><i class="fa-brands fa-google"></i></button>
+          <button type="button" class="social-auth-btn" data-social-provider="github" aria-label="Continue with GitHub"><i class="fa-brands fa-github"></i></button>
+          <button type="button" class="social-auth-btn" data-social-provider="facebook" aria-label="Continue with Facebook"><i class="fa-brands fa-facebook"></i></button>
+        </div>
+        <div class="auth-footer"><span id="auth-role-hint">Not signed up yet?</span><button id="auth-switch" type="button" class="text-button">Create account</button></div>
+      </form>
+    </div>
+  </div>
+
+  <div id="verification-modal" class="modal auth-experience hidden">
+    <div class="modal-panel auth-glass-panel verification-panel">
+      <div class="modal-panel-header">
+        <button id="verification-close" class="modal-close" type="button">&times;</button>
+      </div>
+      <div class="modal-header">
+        <h2>Verify your email</h2>
+        <p>Enter the 6-digit code sent to <strong id="verification-email-label"></strong>.</p>
+      </div>
+      <form id="verification-form">
+        <div class="input-group">
+          <label for="verification-code">Verification code</label>
+          <input id="verification-code" type="text" inputmode="numeric" maxlength="6" placeholder="123456" required />
+        </div>
+        <button type="submit" id="verification-submit-btn" class="primary-btn loading-btn"><span class="btn-label">Verify and continue</span><span class="btn-spinner" aria-hidden="true"></span></button>
+        <button id="verification-resend" type="button" class="text-button forgot-password-link">Resend code</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="profile-modal" class="modal hidden">
+    <div class="modal-panel hk-account-panel">
+      <div class="modal-panel-header"><button id="profile-close" class="modal-close" type="button">&times;</button></div>
+      <div class="hk-account-layout">
+        <aside class="hk-account-rail">
+          <a class="hk-brand" href="/"><img src="hireke-logo.png" alt="HireKe logo" /><small>Never miss your next opportunity.</small></a>
+          <nav class="hk-account-menu" aria-label="Account profile sections">
+            <button type="button" class="active" data-account-section="about"><i class="fa-regular fa-user"></i>Profile</button>
+            <button type="button" data-account-section="skills"><i class="fa-solid fa-list-check"></i>Skills</button>
+            <button type="button" data-account-section="experience"><i class="fa-solid fa-briefcase"></i>Experience</button>
+            <button type="button" data-account-section="education"><i class="fa-solid fa-graduation-cap"></i>Education</button>
+            <button type="button" data-account-section="documents"><i class="fa-regular fa-file-lines"></i>CV & Documents</button>
+            <button type="button" data-account-view="alerts"><i class="fa-regular fa-bell"></i>Alerts</button>
+            <button type="button" data-account-view="settings"><i class="fa-solid fa-gear"></i>Settings</button>
+          </nav>
+        </aside>
+
+        <section class="hk-profile-main">
+          <div class="hk-profile-hero">
+            <div class="hk-profile-cover"></div>
+            <div class="hk-profile-identity">
+              <div>
+                <div class="hk-profile-photo" id="account-avatar-large">G</div>
+                <div class="hk-photo-actions">
+                  <label class="secondary-btn"><i class="fa-solid fa-camera"></i><span>Photo</span><input id="profile-photo-input" type="file" accept="image/jpeg,image/png,image/webp" /></label>
+                  <button type="button" id="profile-photo-save" class="primary-btn hidden">Save Photo</button>
+                </div>
+              </div>
+              <div>
+                <span class="hk-status-pill">Personal account</span>
+                <h2><span id="account-profile-name">Your Name</span><i class="fa-solid fa-circle-check"></i></h2>
+                <p id="account-profile-headline">Add a headline recruiters will remember.</p>
+                <div class="hk-profile-meta">
+                  <span><i class="fa-solid fa-location-dot"></i><span id="account-profile-location">Add location</span></span>
+                  <span><i class="fa-solid fa-briefcase"></i><span id="account-profile-work">Add work preference</span></span>
+                </div>
+                <div id="account-skill-chips" class="hk-chip-row"></div>
+              </div>
+              <div class="hk-profile-actions">
+                <button type="button" id="profile-edit-toggle" class="secondary-btn"><i class="fa-regular fa-pen-to-square"></i>Edit Profile</button>
+                <label class="primary-btn hk-upload-cv"><i class="fa-solid fa-upload"></i>Upload CV<input id="profile-cv" type="file" accept=".pdf,.doc,.docx,.txt" /></label>
+              </div>
+            </div>
+          </div>
+
+          <section class="hk-profile-score-grid">
+            <article>
+              <h3>Profile Strength</h3>
+              <div class="hk-profile-ring" style="--score:0"><strong id="account-profile-score">0%</strong></div>
+              <p id="account-profile-score-copy">Complete profile details to improve matches.</p>
+            </article>
+            <article>
+              <h3>Profile Tips</h3>
+              <ul id="account-profile-tips"></ul>
+            </article>
+          </section>
+
+          <div class="hk-profile-tabs">
+            <button type="button" class="active" data-profile-tab="about">About</button><button type="button" data-profile-tab="experience">Experience</button><button type="button" data-profile-tab="education">Education</button><button type="button" data-profile-tab="skills">Skills</button><button type="button" data-profile-tab="documents">Documents</button><button type="button" data-profile-tab="activity">Activity</button>
+          </div>
+
+          <section class="hk-profile-body-grid">
+            <article class="hk-profile-card-wide" data-profile-section="about">
+              <div class="hk-panel-head"><h3>About Me</h3><button type="button" data-profile-edit-link>Edit</button></div>
+              <p id="account-about-display">Add a short summary about your background, goals, and strengths.</p>
+              <div class="hk-profile-facts">
+                <span><small>Location</small><strong id="account-fact-location">Not set</strong></span>
+                <span><small>Experience Level</small><strong id="account-fact-experience">Not set</strong></span>
+                <span><small>Availability</small><strong>Not set</strong></span>
+                <span><small>Preferred Work</small><strong>Not set</strong></span>
+                <span><small>Languages</small><strong>Not set</strong></span>
+              </div>
+            </article>
+            <article data-profile-section="skills">
+              <div class="hk-panel-head"><h3>Skills</h3><button type="button" data-profile-edit-link>Edit</button></div>
+              <div id="account-skills-display" class="hk-chip-row"></div>
+            </article>
+            <article data-profile-section="experience">
+              <div class="hk-panel-head"><h3>Experience</h3><button type="button" data-profile-edit-link>Edit</button></div>
+              <div id="account-experience-display" class="hk-entry-list"></div>
+            </article>
+            <article data-profile-section="education">
+              <div class="hk-panel-head"><h3>Education</h3><button type="button" data-profile-edit-link>Edit</button></div>
+              <div id="account-education-display" class="hk-entry-list"></div>
+            </article>
+            <article data-profile-section="about">
+              <div class="hk-panel-head"><h3>Career Goals</h3><button type="button" data-profile-edit-link>Edit</button></div>
+              <p id="account-goals-display" class="hk-profile-text-block">Add your short and long-term goals.</p>
+            </article>
+            <article data-profile-section="documents">
+              <div class="hk-panel-head"><h3>Documents</h3><label class="secondary-btn hk-upload-cv"><i class="fa-solid fa-upload"></i>Upload CV<input id="profile-cv-modal" type="file" accept=".pdf,.doc,.docx,.txt" /></label></div>
+              <div id="account-documents-display" class="hk-document-list"></div>
+            </article>
+            <article data-profile-section="activity">
+              <div class="hk-panel-head"><h3>Activity</h3><button type="button" data-nav-view="applications">Applications</button></div>
+              <div id="account-activity-display" class="hk-activity-list"></div>
+            </article>
+          </section>
+        </section>
+
+        <aside class="hk-profile-side">
+          <article>
+            <h3><i class="fa-solid fa-wand-magic-sparkles"></i>HireKe AI Assistant</h3>
+            <p id="account-ai-greeting">How can I help you today?</p>
+            <button type="button">Improve my profile</button>
+            <button type="button">Find matching opportunities</button>
+            <button type="button">Generate a cover letter</button>
+            <button type="button">Prepare for interviews</button>
+          </article>
+          <article>
+            <div class="hk-panel-head"><h3>Recommended Opportunities</h3><button type="button" data-nav-view="opportunities">View all</button></div>
+            <div id="account-recommended-list" class="hk-mini-opportunities"></div>
+          </article>
+          <article>
+            <div class="hk-panel-head"><h3>Application Analytics</h3><span>This Month</span></div>
+            <div class="hk-account-analytics">
+              <span>Applications<strong id="account-analytics-applications">0</strong></span>
+              <span>Interviews<strong id="account-analytics-interviews">0</strong></span>
+              <span>Offers<strong id="account-analytics-offers">0</strong></span>
+            </div>
+          </article>
+        </aside>
+      </div>
+
+      <form id="profile-form" class="hk-profile-editor hidden">
+        <div class="modal-header"><h2>Edit Profile</h2><p>Saved details stay on your account and load the next time you sign in.</p></div>
+        <div class="hk-editor-grid">
+          <div class="input-group"><label for="profile-name">Full Name</label><input id="profile-name" type="text" placeholder="Enter your full name" /></div>
+          <div class="input-group"><label for="profile-headline">Headline</label><input id="profile-headline" type="text" placeholder="Software developer | Building solutions" /></div>
+          <div class="input-group"><label for="profile-location">Location</label><input id="profile-location" type="text" placeholder="Nairobi, Kenya" /></div>
+          <div class="input-group"><label for="profile-skills">Skills</label><textarea id="profile-skills" placeholder="JavaScript, React, Node.js, Python"></textarea></div>
+          <div class="input-group"><label for="profile-about">About</label><textarea id="profile-about" placeholder="Write a short profile summary"></textarea></div>
+          <div class="input-group"><label for="profile-certifications">Certifications</label><textarea id="profile-certifications" placeholder="Certificates, licenses, awards"></textarea></div>
+          <div class="input-group"><label for="profile-career-goals">Career Goals</label><textarea id="profile-career-goals" placeholder="Short and long term goals"></textarea></div>
+        </div>
+        <section class="hk-structured-editor">
+          <div class="hk-panel-head"><h3>Experience</h3><button type="button" id="experience-form-reset" class="secondary-btn">New Experience</button></div>
+          <input type="hidden" id="experience-entry-id" />
+          <div class="hk-editor-grid">
+            <div class="input-group"><label for="experience-organization">Organization/Company Name</label><input id="experience-organization" type="text" placeholder="Company or organization" /></div>
+            <div class="input-group"><label for="experience-title">Job Title/Role</label><input id="experience-title" type="text" placeholder="Job title or role" /></div>
+            <div class="input-group"><label for="experience-type">Employment Type</label><select id="experience-type"><option value="">Select type</option><option>Full-time</option><option>Part-time</option><option>Contract</option><option>Internship</option><option>Volunteer</option><option>Freelance</option></select></div>
+            <div class="input-group"><label for="experience-year-from">Year From</label><input id="experience-year-from" type="number" min="1900" max="2100" placeholder="2023" /></div>
+            <div class="input-group"><label for="experience-year-to">Year To</label><input id="experience-year-to" type="number" min="1900" max="2100" placeholder="2026" /></div>
+            <div class="toggle-row"><input id="experience-current" type="checkbox" /><label for="experience-current">Currently Working Here</label></div>
+            <div class="input-group hk-editor-wide"><label for="experience-description">Description</label><textarea id="experience-description" placeholder="Key responsibilities, achievements, or tools used"></textarea></div>
+          </div>
+          <div class="hk-editor-actions"><button type="button" id="experience-save" class="primary-btn">Save Experience</button></div>
+          <div id="experience-editor-list" class="hk-entry-list"></div>
+        </section>
+        <section class="hk-structured-editor">
+          <div class="hk-panel-head"><h3>Education</h3><button type="button" id="education-form-reset" class="secondary-btn">New Education</button></div>
+          <input type="hidden" id="education-entry-id" />
+          <div class="hk-editor-grid">
+            <div class="input-group"><label for="education-level">Education Level</label><select id="education-level"><option value="">Select level</option><option>Primary Education</option><option>Secondary Education</option><option>TVET</option><option>College</option><option>University</option></select></div>
+            <div class="input-group"><label for="education-institution">School/Institution Name</label><input id="education-institution" type="text" placeholder="Institution name" /></div>
+            <div class="input-group"><label for="education-course">Course/Program</label><input id="education-course" type="text" placeholder="Course or program" /></div>
+            <div class="input-group"><label for="education-year-from">Year From</label><input id="education-year-from" type="number" min="1900" max="2100" placeholder="2020" /></div>
+            <div class="input-group"><label for="education-year-to">Year To</label><input id="education-year-to" type="number" min="1900" max="2100" placeholder="2024" /></div>
+            <div class="input-group hk-editor-wide"><label for="education-description">Description</label><textarea id="education-description" placeholder="Achievements, activities, or relevant notes"></textarea></div>
+          </div>
+          <div class="hk-editor-actions"><button type="button" id="education-save" class="primary-btn">Save Education</button></div>
+          <div id="education-editor-list" class="hk-entry-list"></div>
+        </section>
+        <div class="hk-editor-actions">
+          <button type="button" id="profile-edit-cancel" class="secondary-btn">Cancel</button>
+          <button type="submit" class="primary-btn">Save Profile</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="job-modal" class="modal hidden">
+    <div class="modal-panel hk-job-modal">
+      <div class="modal-panel-header"><button id="job-modal-close" class="modal-close" type="button">&times;</button></div>
+      <div class="modal-header"><h2 id="job-modal-title"></h2><p id="job-modal-company"></p></div>
+      <div class="job-modal-content">
+        <p class="job-meta" id="job-modal-location"></p>
+        <p class="job-meta" id="job-modal-salary"></p>
+        <h3>Description</h3><p id="job-modal-description"></p>
+        <h3>Requirements</h3><ul id="job-modal-requirements"></ul>
+        <div id="job-modal-ai-match" class="hk-ai-match-card hidden"></div>
+        <div id="job-modal-apply"></div>
+        <div class="job-modal-actions">
+          <button id="job-modal-email" class="secondary-btn" type="button">Apply by email</button>
+          <button id="job-modal-website" class="primary-btn" type="button">Save opportunity</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <script src="auth-ui-utils.js"></script>
+  <script src="home-dashboard.js"></script>
+</body>
+</html>

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Login - HireKe</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+</head>
+<body>
+  <div class="auth-page auth-experience admin-auth-page">
+    <div class="auth-card auth-glass-panel">
+      <div class="modal-panel-header">
+        <a href="index.html" class="modal-back-btn"><i class="fas fa-arrow-left"></i> Back</a>
+      </div>
+      <div class="auth-header auth-brand-header">
+        <img src="hireke-logo.png" alt="HireKe logo" />
+      </div>
+      <h1>Admin Login</h1>
+      <p>Use your admin credentials to access the management dashboard.</p>
+      <form id="adminLoginForm">
+        <div class="input-group">
+          <label for="adminEmail">Email</label>
+          <input id="adminEmail" type="email" placeholder="admin@example.com" required />
+        </div>
+        <div class="input-group password-group">
+          <label for="adminPassword">Password</label>
+          <div class="password-wrap">
+            <input id="adminPassword" type="password" placeholder="Enter your password" required />
+            <button id="togglePassword" type="button" class="password-toggle" aria-label="Show password">
+              <i class="fa-solid fa-eye"></i>
+            </button>
+          </div>
+        </div>
+        <button id="admin-submit-btn" class="primary-btn loading-btn" type="submit"><span class="btn-label">Sign in</span><span class="btn-spinner" aria-hidden="true"></span></button>
+      </form>
+      <p id="loginError" class="error-message"></p>
+      <div class="auth-footer">
+        <a href="index.html">Back to homepage</a>
+      </div>
+    </div>
+  </div>
+  <script src="auth-ui-utils.js"></script>
+  <script src="admin-dashboard.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      window.setupPasswordToggle({
+        inputId: 'adminPassword',
+        toggleButtonId: 'togglePassword'
+      });
+
+      // Prevent default browser form submit reload is already handled in JS (loginAdmin)
+      // Avoid extra submit listeners that could interfere with click/submit flow.
+      // (Intentionally left blank)
+    });
+  </script>
+</body>
+</html>
+

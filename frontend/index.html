@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HireKe Dashboard</title>
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <!-- Google Font (Inter) -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap"
+    rel="stylesheet" />
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f5f7fb;
+      color: #1e293b;
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* ---------- SIDEBAR ---------- */
+    .sidebar {
+      width: 260px;
+      background: #ffffff;
+      border-right: 1px solid #e9edf4;
+      padding: 28px 20px;
+      display: flex;
+      flex-direction: column;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+    }
+
+    .logo {
+      margin-bottom: 36px;
+      display: flex;
+      align-items: center;
+    }
+
+    .logo img {
+      width: 156px;
+      max-width: 100%;
+      height: 110px;
+      object-fit: contain;
+      object-position: left center;
+      display: block;
+    }
+
+    .nav-section {
+      margin-bottom: 32px;
+    }
+
+    .nav-section .label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #94a3b8;
+      margin-bottom: 12px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 10px 14px;
+      border-radius: 10px;
+      color: #475569;
+      font-weight: 500;
+      font-size: 14px;
+      transition: background 0.15s, color 0.15s;
+      cursor: default;
+      margin-bottom: 2px;
+    }
+
+    .nav-item i {
+      width: 20px;
+      font-size: 16px;
+      color: #94a3b8;
+    }
+
+    .nav-item.active {
+      background: #eef4ff;
+      color: #2d7aff;
+    }
+
+    .nav-item.active i {
+      color: #2d7aff;
+    }
+
+    .nav-item:not(.active):hover {
+      background: #f1f5f9;
+    }
+
+    .profile-badge {
+      margin-top: auto;
+      background: #f8fafc;
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border: 1px solid #e9edf4;
+    }
+
+    .profile-badge .avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: #2d7aff;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .profile-badge .info {
+      flex: 1;
+    }
+
+    .profile-badge .name {
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .profile-badge .role {
+      font-size: 12px;
+      color: #64748b;
+    }
+
+    .profile-badge .strength {
+      font-size: 13px;
+      font-weight: 600;
+      color: #2d7aff;
+    }
+
+    /* ---------- MAIN CONTENT ---------- */
+    .main {
+      flex: 1;
+      padding: 28px 36px 40px;
+      max-width: 1280px;
+    }
+
+    /* header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 28px;
+    }
+
+    .greeting h1 {
+      font-size: 26px;
+      font-weight: 700;
+    }
+
+    .greeting h1 span {
+      color: #2d7aff;
+    }
+
+    .greeting p {
+      color: #64748b;
+      font-size: 15px;
+      margin-top: 4px;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .header-actions .icon-btn {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: #fff;
+      border: 1px solid #e9edf4;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #475569;
+      font-size: 18px;
+      transition: 0.15s;
+      cursor: default;
+    }
+
+    .header-actions .icon-btn:hover {
+      background: #f1f5f9;
+    }
+
+    .header-actions .avatar-sm {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: #2d7aff;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+    }
+
+    /* stats row */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .stat-card {
+      background: #fff;
+      border-radius: 14px;
+      padding: 16px 18px;
+      border: 1px solid #e9edf4;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+    }
+
+    .stat-card .number {
+      font-size: 26px;
+      font-weight: 700;
+      color: #0a2540;
+    }
+
+    .stat-card .label {
+      font-size: 13px;
+      color: #64748b;
+      margin-top: 2px;
+    }
+
+    /* two-column layout */
+    .two-col {
+      display: grid;
+      grid-template-columns: 1.6fr 1fr;
+      gap: 28px;
+      margin-bottom: 32px;
+    }
+
+    /* recommended cards */
+    .section-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .section-title a {
+      font-size: 13px;
+      font-weight: 500;
+      color: #2d7aff;
+      text-decoration: none;
+    }
+
+    .rec-card {
+      background: #fff;
+      border-radius: 14px;
+      padding: 16px 20px;
+      border: 1px solid #e9edf4;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: 0.1s;
+    }
+
+    .rec-card:hover {
+      border-color: #cbd5e1;
+    }
+
+    .rec-card .info h4 {
+      font-weight: 600;
+      font-size: 15px;
+    }
+
+    .rec-card .info .meta {
+      font-size: 13px;
+      color: #64748b;
+      margin-top: 2px;
+    }
+
+    .rec-card .info .meta span {
+      margin-right: 12px;
+    }
+
+    .rec-card .match {
+      font-weight: 700;
+      font-size: 18px;
+      color: #2d7aff;
+      background: #eef4ff;
+      padding: 4px 12px;
+      border-radius: 40px;
+      font-size: 15px;
+    }
+
+    /* right sidebar widgets */
+    .widget {
+      background: #fff;
+      border-radius: 14px;
+      padding: 18px 20px;
+      border: 1px solid #e9edf4;
+      margin-bottom: 20px;
+    }
+
+    .widget .widget-title {
+      font-weight: 600;
+      font-size: 15px;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .widget .widget-title a {
+      font-size: 12px;
+      font-weight: 500;
+      color: #2d7aff;
+      text-decoration: none;
+    }
+
+    .activity-item {
+      font-size: 14px;
+      padding: 6px 0;
+      border-bottom: 1px solid #f1f5f9;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #1e293b;
+    }
+
+    .activity-item i {
+      color: #94a3b8;
+      width: 18px;
+      font-size: 13px;
+    }
+
+    .alert-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 14px;
+    }
+
+    .alert-item .time {
+      color: #94a3b8;
+      font-size: 12px;
+      white-space: nowrap;
+      margin-left: 12px;
+    }
+
+    /* categories chips */
+    .category-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+    }
+
+    .category-chip {
+      background: #f8fafc;
+      border-radius: 40px;
+      padding: 6px 14px;
+      font-size: 13px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border: 1px solid #e9edf4;
+    }
+
+    .category-chip .count {
+      font-weight: 600;
+      color: #2d7aff;
+    }
+
+    /* profile tips */
+    .tip-item {
+      font-size: 13px;
+      padding: 4px 0;
+      color: #475569;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .tip-item i {
+      color: #f59e0b;
+      font-size: 13px;
+    }
+
+    /* bottom row: activity + customize */
+    .bottom-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 28px;
+      margin-top: 8px;
+    }
+
+    .app-stats {
+      display: flex;
+      gap: 28px;
+      flex-wrap: wrap;
+      margin: 6px 0 10px;
+    }
+
+    .app-stats .stat {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .app-stats .stat .num {
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    .app-stats .stat .lbl {
+      font-size: 13px;
+      color: #64748b;
+    }
+
+    .customize-row {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin-top: 6px;
+    }
+
+    .customize-row .tag {
+      background: #f1f5f9;
+      padding: 4px 14px;
+      border-radius: 40px;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .customize-row .tag i {
+      font-size: 12px;
+      color: #2d7aff;
+    }
+
+    hr {
+      border: none;
+      border-top: 1px solid #e9edf4;
+      margin: 18px 0 12px;
+    }
+
+    /* responsive */
+    @media (max-width: 1100px) {
+      .stats-row {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .two-col {
+        grid-template-columns: 1fr;
+      }
+
+      .bottom-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .sidebar {
+        display: none;
+      }
+
+      .main {
+        padding: 20px 16px;
+      }
+
+      .stats-row {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .category-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    /* small helpers */
+    .text-muted {
+      color: #64748b;
+    }
+
+    .fw-600 {
+      font-weight: 600;
+    }
+
+    .mt-1 {
+      margin-top: 4px;
+    }
+
+    .gap-8 {
+      gap: 8px;
+    }
+
+    .flex {
+      display: flex;
+    }
+
+    .flex-between {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .mb-12 {
+      margin-bottom: 12px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ========== SIDEBAR ========== -->
+  <aside class="sidebar">
+    <div class="logo">
+      <img src="/hireke-logo.png" alt="HireKe logo" />
+    </div>
+
+    <div class="nav-section">
+      <div class="label">Main</div>
+      <div class="nav-item active">
+        <i class="fas fa-th-large"></i> Dashboard
+      </div>
+      <div class="nav-item">
+        <i class="fas fa-briefcase"></i> Opportunities
+      </div>
+      <div class="nav-item">
+        <i class="fas fa-bookmark"></i> Saved
+      </div>
+      <div class="nav-item">
+        <i class="fas fa-paper-plane"></i> Applications
+      </div>
+      <div class="nav-item">
+        <i class="fas fa-bell"></i> Alerts
+      </div>
+      <div class="nav-item">
+        <i class="fas fa-user-edit"></i> Profile Builder
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="label">AI Tools</div>
+      <div class="nav-item">
+        <i class="fas fa-robot"></i> AI Assistant
+      </div>
+      <div class="nav-item">
+        <i class="fas fa-file-alt"></i> CV &amp; Documents
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="label">Account</div>
+      <div class="nav-item">
+        <i class="fas fa-chart-line"></i> Analytics
+      </div>
+      <div class="nav-item">
+        <i class="fas fa-cog"></i> Settings
+      </div>
+    </div>
+
+    <div class="profile-badge">
+      <div class="avatar">B</div>
+      <div class="info">
+        <div class="name">Brian</div>
+        <div class="role">Job Seeker</div>
+      </div>
+      <div class="strength">80%</div>
+    </div>
+  </aside>
+
+  <!-- ========== MAIN ========== -->
+  <main class="main">
+
+    <!-- HEADER -->
+    <div class="header">
+      <div class="greeting">
+        <h1>Good morning, Brian! <span>🎉</span></h1>
+        <p>Here are opportunities picked for you today.</p>
+      </div>
+      <div class="header-actions">
+        <div class="icon-btn"><i class="far fa-bell"></i></div>
+        <div class="icon-btn"><i class="far fa-moon"></i></div>
+        <div class="avatar-sm">B</div>
+      </div>
+    </div>
+
+    <!-- STATS ROW -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="number">1,245</div>
+        <div class="label">Jobs</div>
+      </div>
+      <div class="stat-card">
+        <div class="number">532</div>
+        <div class="label">Scholarships</div>
+      </div>
+      <div class="stat-card">
+        <div class="number">842</div>
+        <div class="label">Internships</div>
+      </div>
+      <div class="stat-card">
+        <div class="number">215</div>
+        <div class="label">Tenders</div>
+      </div>
+      <div class="stat-card">
+        <div class="number">324</div>
+        <div class="label">Grants</div>
+      </div>
+      <div class="stat-card">
+        <div class="number">624</div>
+        <div class="label">Remote Jobs</div>
+      </div>
+    </div>
+
+    <!-- TWO COLUMN: RECOMMENDED + RIGHT WIDGETS -->
+    <div class="two-col">
+
+      <!-- LEFT: RECOMMENDED -->
+      <div>
+        <div class="section-title">
+          <span>Recommended for You</span>
+          <a href="#">View all</a>
+        </div>
+
+        <div class="rec-card">
+          <div class="info">
+            <h4>Cybersecurity Intern</h4>
+            <div class="meta">
+              <span>Safaricom PLC</span>
+              <span>Internship</span>
+            </div>
+          </div>
+          <div class="match">89%</div>
+        </div>
+
+        <div class="rec-card">
+          <div class="info">
+            <h4>Data Analyst</h4>
+            <div class="meta">
+              <span>Andela</span>
+              <span>Full-time</span>
+            </div>
+          </div>
+          <div class="match">84%</div>
+        </div>
+
+        <div class="rec-card">
+          <div class="info">
+            <h4>Government Procurement Tender</h4>
+            <div class="meta">
+              <span>Kenya National Highways Authority</span>
+              <span>Tender</span>
+            </div>
+          </div>
+          <div class="match">78%</div>
+        </div>
+
+        <div class="rec-card">
+          <div class="info">
+            <h4>Chevening Scholarship 2025</h4>
+            <div class="meta">
+              <span>Foreign, Commonwealth &amp; Development Office</span>
+              <span>Scholarship</span>
+            </div>
+          </div>
+          <div class="match">91%</div>
+        </div>
+
+        <div class="rec-card">
+          <div class="info">
+            <h4>UI/UX Design Bootcamp</h4>
+            <div class="meta">
+              <span>Zindua School</span>
+              <span>Training</span>
+            </div>
+          </div>
+          <div class="match">81%</div>
+        </div>
+      </div>
+
+      <!-- RIGHT: WIDGETS -->
+      <div>
+
+        <!-- Profile Strength -->
+        <div class="widget">
+          <div class="widget-title">
+            <span>Profile Strength</span>
+            <span style="font-size:22px; font-weight:700; color:#2d7aff;">80%</span>
+          </div>
+          <div style="background:#e9edf4; height:6px; border-radius:40px; margin-bottom:10px;">
+            <div style="width:80%; background:#2d7aff; height:6px; border-radius:40px;"></div>
+          </div>
+          <div class="flex-between" style="font-size:14px;">
+            <span><span style="font-weight:600;">Very Good</span> — Complete your profile to get better matches.</span>
+            <a href="#" style="color:#2d7aff; font-weight:500; font-size:13px; text-decoration:none;">Improve
+              Profile</a>
+          </div>
+        </div>
+
+        <!-- Activity -->
+        <div class="widget">
+          <div class="widget-title">
+            <span>Your Activity</span>
+            <a href="#">View all</a>
+          </div>
+          <div class="activity-item"><i class="fas fa-check-circle" style="color:#22c55e;"></i> Applied to Data Analyst
+            at Andela</div>
+          <div class="activity-item"><i class="fas fa-bookmark" style="color:#2d7aff;"></i> Saved Cybersecurity Intern
+            at Safaricom</div>
+          <div class="activity-item"><i class="fas fa-file-alt" style="color:#8b5cf6;"></i> Generated CV — Software
+            Engineer</div>
+          <div class="activity-item"><i class="fas fa-user-edit" style="color:#f59e0b;"></i> Updated profile information
+          </div>
+        </div>
+
+        <!-- Applications Stats -->
+        <div class="widget">
+          <div class="widget-title">
+            <span>Applications</span>
+            <a href="#">View all applications</a>
+          </div>
+          <div class="app-stats">
+            <div class="stat">
+              <span class="num">12</span>
+              <span class="lbl">Total Submitted</span>
+            </div>
+            <div class="stat">
+              <span class="num">28</span>
+              <span class="lbl">Saved for later</span>
+            </div>
+            <div class="stat">
+              <span class="num">15</span>
+              <span class="lbl">Active alerts</span>
+            </div>
+          </div>
+          <div style="margin-top:8px; display:flex; gap:16px; font-size:13px;">
+            <a href="#" style="color:#2d7aff; text-decoration:none;">View saved</a>
+            <a href="#" style="color:#2d7aff; text-decoration:none;">View all applications</a>
+          </div>
+        </div>
+
+        <!-- Customize Dashboard -->
+        <div class="widget">
+          <div class="widget-title">
+            <span>Customize Dashboard</span>
+            <a href="#">Edit</a>
+          </div>
+          <div class="customize-row">
+            <span class="tag"><i class="fas fa-check-circle" style="color:#22c55e;"></i> Applications</span>
+            <span class="tag"><i class="fas fa-check-circle" style="color:#22c55e;"></i> Saved Opportunities</span>
+            <span class="tag"><i class="fas fa-toggle-on" style="color:#2d7aff;"></i> Alerts On</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- BOTTOM ROW: ALERTS + CATEGORIES + TIPS -->
+    <div class="bottom-row">
+
+      <!-- Recent Alerts -->
+      <div class="widget">
+        <div class="widget-title">
+          <span>Recent Alerts</span>
+          <a href="#">View all</a>
+        </div>
+        <div class="alert-item">
+          <span>New scholarship matching your profile</span>
+          <span class="time">10m ago</span>
+        </div>
+        <div class="alert-item">
+          <span>Software engineering job posted</span>
+          <span class="time">15m ago</span>
+        </div>
+        <div class="alert-item">
+          <span>Tender closing in 7 days</span>
+          <span class="time">1h ago</span>
+        </div>
+        <div class="alert-item">
+          <span>New grant opportunity available</span>
+          <span class="time">2h ago</span>
+        </div>
+        <div class="alert-item">
+          <span>UI/UX training you might like</span>
+          <span class="time">3h ago</span>
+        </div>
+      </div>
+
+      <!-- Top Categories + Profile Tips -->
+      <div>
+
+        <div class="widget">
+          <div class="widget-title">
+            <span>Top Categories</span>
+            <a href="#">View all</a>
+          </div>
+          <div class="category-grid">
+            <span class="category-chip">Jobs <span class="count">1,245</span></span>
+            <span class="category-chip">Scholarships <span class="count">532</span></span>
+            <span class="category-chip">Internships <span class="count">842</span></span>
+            <span class="category-chip">Tenders <span class="count">215</span></span>
+            <span class="category-chip">Grants <span class="count">324</span></span>
+            <span class="category-chip">Remote Jobs <span class="count">624</span></span>
+          </div>
+        </div>
+
+        <div class="widget">
+          <div class="widget-title">
+            <span>Profile Tips</span>
+            <i class="fas fa-lightbulb" style="color:#f59e0b;"></i>
+          </div>
+          <div class="tip-item"><i class="fas fa-plus-circle"></i> Add more skills to improve matches</div>
+          <div class="tip-item"><i class="fas fa-upload"></i> Upload your CV for better recommendations</div>
+          <div class="tip-item"><i class="fas fa-graduation-cap"></i> Complete your education details</div>
+          <div class="tip-item"><i class="fas fa-briefcase"></i> Add your work experience</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- CHAT with AI Assistant (floating style) -->
+    <div style="position:fixed; bottom:30px; right:30px; z-index:999;">
+      <div
+        style="background:#2d7aff; color:#fff; border-radius:60px; padding:14px 24px; box-shadow:0 8px 30px rgba(45,122,255,0.35); display:flex; align-items:center; gap:12px; font-weight:600; cursor:default;">
+        <i class="fas fa-robot" style="font-size:20px;"></i>
+        <span>Chat with AI Assistant</span>
+        <i class="fas fa-chevron-right" style="font-size:13px;"></i>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- optional tiny JS to show that it's interactive (just a console greeting) -->
+  <script>
+    console.log('HireKe dashboard loaded ✅');
+    // Any interactive JS can go here — all static for now.
+  </script>
+
+</body>
+
+</html>

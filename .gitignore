@@ -1,0 +1,17 @@
+.env
+.env.*
+!.env.example
+
+node_modules/
+npm-debug.log*
+
+*.db
+*.sqlite
+*.sqlite3
+*.log
+
+uploads/
+ui-smoke-shots/
+
+.DS_Store
+Thumbs.db

@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HireKe Administrator Dashboard</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --navy: #071229;
+      --navy-2: #0b1831;
+      --blue: #2475ff;
+      --blue-2: #155ee8;
+      --green: #13b981;
+      --amber: #f5a524;
+      --red: #ef476f;
+      --purple: #7457f5;
+      --ink: #091631;
+      --muted: #60708b;
+      --line: #dfe6f2;
+      --panel: #ffffff;
+      --surface: #f4f7fb;
+      --shadow: 0 18px 45px rgba(16, 35, 73, 0.08);
+      --radius: 8px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top right, #eef5ff 0, var(--surface) 34%, #f8fafd 100%);
+      color: var(--ink);
+      letter-spacing: 0;
+    }
+
+    button, input, select { font: inherit; }
+    button { cursor: pointer; }
+
+    .app-shell { display: flex; min-height: 100vh; }
+    .sidebar {
+      position: fixed;
+      inset: 0 auto 0 0;
+      width: 288px;
+      background: linear-gradient(180deg, var(--navy) 0%, #091937 58%, #061024 100%);
+      color: #fff;
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+      z-index: 20;
+      box-shadow: 12px 0 40px rgba(7, 18, 41, 0.18);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      margin-bottom: 36px;
+    }
+    .logo img {
+      width: 168px;
+      max-width: 100%;
+      height: 118px;
+      object-fit: contain;
+      object-position: left center;
+      display: block;
+    }
+
+    .admin-card {
+      display: grid;
+      grid-template-columns: 56px 1fr;
+      gap: 14px;
+      align-items: center;
+      margin-bottom: 30px;
+    }
+    .admin-avatar, .avatar, .mini-avatar {
+      display: inline-grid;
+      place-items: center;
+      border-radius: 50%;
+      color: #fff;
+      background: linear-gradient(145deg, #2d7cff, #122d73);
+      font-weight: 800;
+      position: relative;
+      flex: 0 0 auto;
+    }
+    .admin-avatar { width: 56px; height: 56px; box-shadow: inset 0 0 0 7px #eaf2ff; }
+    .avatar { width: 42px; height: 42px; }
+    .mini-avatar { width: 28px; height: 28px; font-size: 11px; }
+    .admin-eyebrow { color: rgba(255,255,255,0.72); font-size: 13px; }
+    .admin-name { font-weight: 700; margin-top: 3px; }
+    .role-pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 9px;
+      border-radius: 999px;
+      background: rgba(36, 117, 255, 0.24);
+      color: #dbe8ff;
+      font-size: 11px;
+      font-weight: 700;
+      margin-top: 8px;
+    }
+
+    .nav-menu { list-style: none; display: grid; gap: 9px; overflow-y: auto; padding-right: 2px; }
+    .nav-menu a {
+      min-height: 46px;
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      color: #dce7fb;
+      text-decoration: none;
+      border-radius: var(--radius);
+      padding: 0 14px;
+      font-weight: 650;
+      font-size: 14px;
+      transition: background .18s ease, color .18s ease, transform .18s ease;
+    }
+    .nav-menu i { width: 18px; text-align: center; color: #e6eefc; }
+    .nav-menu a:hover { background: rgba(255,255,255,.08); color: #fff; transform: translateX(2px); }
+    .nav-menu li.active a { background: linear-gradient(135deg, #2b82ff, #1765f2); color: #fff; box-shadow: 0 10px 24px rgba(36,117,255,.34); }
+    .nav-badge {
+      margin-left: auto;
+      min-width: 20px;
+      height: 20px;
+      display: inline-grid;
+      place-items: center;
+      border-radius: 999px;
+      background: var(--red);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 800;
+    }
+    .nav-badge.blue { background: var(--blue); }
+
+    .sidebar-footer {
+      margin-top: auto;
+      padding-top: 22px;
+      border-top: 1px solid rgba(255,255,255,.08);
+    }
+    .system-card {
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: var(--radius);
+      padding: 16px;
+      background: rgba(255,255,255,.035);
+      margin-bottom: 20px;
+    }
+    .system-card strong { font-size: 13px; }
+    .system-card p { color: #b9c8de; font-size: 12px; margin-top: 8px; }
+    .dot { width: 7px; height: 7px; background: var(--green); border-radius: 50%; display: inline-block; margin-right: 7px; }
+    #adminLogoutBtn { color: #ff6b7d; text-decoration: none; display: inline-flex; gap: 12px; align-items: center; font-weight: 750; }
+
+    .main-content {
+      width: calc(100% - 288px);
+      margin-left: 288px;
+      padding: 26px 28px 36px;
+    }
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 18px;
+      margin-bottom: 22px;
+    }
+    .page-title { font-size: 26px; font-weight: 800; letter-spacing: 0; }
+    .page-subtitle { color: var(--muted); margin-top: 10px; font-size: 15px; }
+    .top-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: flex-end; }
+    .search-wrap {
+      height: 42px;
+      min-width: 230px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #eef3fb;
+      color: #43536e;
+      border: 1px solid transparent;
+      border-radius: 999px;
+      padding: 0 16px;
+    }
+    .search-wrap input { border: 0; outline: 0; background: transparent; width: 100%; color: var(--ink); font-size: 13px; }
+    .icon-button {
+      width: 42px;
+      height: 42px;
+      border: 0;
+      border-radius: 50%;
+      background: #eef3fb;
+      color: #172744;
+      display: grid;
+      place-items: center;
+      position: relative;
+    }
+    .notification-dot {
+      position: absolute;
+      right: 5px;
+      top: 3px;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 5px;
+      border-radius: 999px;
+      background: var(--red);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 800;
+      display: grid;
+      place-items: center;
+      border: 2px solid #f8fbff;
+    }
+
+    .alert-banner {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      background: #fff1f2;
+      color: #9f1239;
+      border: 1px solid #fecdd3;
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      margin-bottom: 18px;
+      font-size: 14px;
+    }
+
+    .toolbar {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    .date-filter {
+      height: 40px;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 15px;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      color: #172744;
+      font-size: 13px;
+      font-weight: 700;
+      box-shadow: 0 6px 18px rgba(16,35,73,.04);
+    }
+    .btn {
+      min-height: 40px;
+      border: 1px solid transparent;
+      border-radius: var(--radius);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      padding: 0 16px;
+      font-weight: 750;
+      font-size: 14px;
+      transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+    }
+    .btn:hover { transform: translateY(-1px); }
+    .btn-primary { background: linear-gradient(135deg, #2d82ff, #145ee7); color: #fff; box-shadow: 0 10px 22px rgba(36,117,255,.28); }
+    .btn-secondary { background: #edf2f8; color: #172744; border-color: #dbe4f0; }
+    .btn-success, .approve-btn { background: #e8fbf4; color: #069363; }
+    .btn-warning { background: #fff5db; color: #9c6500; }
+    .btn-danger, .reject-btn { background: #fff0f3; color: #d62855; }
+    .reset-btn { background: #e8efff; color: #155ee8; }
+    .approve-btn, .reject-btn, .reset-btn {
+      border: 0;
+      border-radius: 7px;
+      padding: 9px 12px;
+      font-weight: 750;
+    }
+
+    .page-section { display: none; }
+    .page-section.active { display: block; }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(160px, 1fr));
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+    .stat-card, .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .stat-card {
+      min-height: 132px;
+      padding: 22px 20px;
+      display: grid;
+      grid-template-columns: 50px 1fr auto;
+      gap: 15px;
+      align-items: start;
+    }
+    .stat-icon {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-size: 20px;
+    }
+    .stat-icon.blue { color: var(--blue); background: #eaf2ff; }
+    .stat-icon.green { color: var(--green); background: #e8fbf4; }
+    .stat-icon.amber { color: var(--amber); background: #fff5df; }
+    .stat-icon.purple { color: var(--purple); background: #f0edff; }
+    .stat-label { color: var(--muted); font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+    .stat-value { color: var(--ink); font-size: 24px; font-weight: 800; line-height: 1.15; }
+    .trend { color: var(--green); font-size: 12px; font-weight: 750; margin-top: 12px; }
+    .trend span { color: var(--muted); font-weight: 500; margin-left: 4px; }
+    .more-dot { color: #173457; font-size: 15px; }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.25fr) minmax(0, 1.1fr) 310px;
+      gap: 16px;
+      align-items: start;
+    }
+    .lower-grid {
+      display: grid;
+      grid-template-columns: minmax(0, .95fr) minmax(0, .95fr) minmax(310px, .9fr);
+      gap: 16px;
+      margin-top: 16px;
+    }
+    .bottom-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.6fr) minmax(330px, .8fr);
+      gap: 16px;
+      margin-top: 16px;
+    }
+    .card { padding: 18px; min-width: 0; }
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 15px;
+    }
+    .section-title { font-size: 16px; font-weight: 800; }
+    .section-link {
+      border: 0;
+      background: none;
+      color: var(--blue);
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .chart-box { height: 274px; }
+    .chart-box.small { height: 244px; }
+
+    .health-list { display: grid; gap: 17px; margin: 18px 0; }
+    .health-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: 13px; font-weight: 700; }
+    .health-row span:last-child { color: var(--green); font-weight: 600; font-size: 12px; }
+    .health-row i { color: var(--green); margin-right: 8px; }
+    .status-good { border-radius: 999px; padding: 6px 12px; background: #e8fbf4; color: #07945f; font-weight: 800; font-size: 12px; }
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border-radius: 999px;
+      padding: 7px 11px;
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .status-online { background: #e8fbf4; color: #07945f; }
+    .status-offline { background: #fff0f3; color: #d62855; }
+    .pulse { width: 8px; height: 8px; border-radius: 50%; }
+    .pulse-online { background: var(--green); }
+    .pulse-offline { background: var(--red); }
+
+    .list-stack { display: grid; gap: 10px; }
+    .list-card {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      padding: 13px 0;
+      border-bottom: 1px solid #edf1f7;
+    }
+    .list-card:last-child { border-bottom: 0; }
+    .list-card strong { font-size: 14px; }
+    .list-card p { color: var(--muted); font-size: 12px; margin-top: 4px; }
+    .action-buttons { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+
+    .data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .data-table th {
+      text-align: left;
+      padding: 13px 12px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      border-bottom: 1px solid var(--line);
+      background: #fbfcff;
+    }
+    .data-table td { padding: 13px 12px; border-bottom: 1px solid #edf1f7; vertical-align: top; }
+    .placeholder-text { color: var(--muted); font-size: 14px; padding: 14px 0; }
+    .form-row { display: flex; align-items: end; gap: 14px; flex-wrap: wrap; }
+    .field { display: grid; gap: 6px; }
+    .field label { color: var(--muted); font-size: 12px; font-weight: 700; }
+    .field input, .field select, .field textarea, .search-bar {
+      min-height: 40px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 0 12px;
+      outline: 0;
+      background: #fff;
+      color: var(--ink);
+    }
+    .field textarea {
+      min-height: 112px;
+      padding: 10px 12px;
+      resize: vertical;
+      line-height: 1.45;
+    }
+    .importer-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 340px;
+      gap: 16px;
+      align-items: start;
+    }
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .form-grid .span-2 { grid-column: 1 / -1; }
+    .notice {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      background: #fbfcff;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    .notice.warning { background: #fff8e8; border-color: #fee2a8; color: #8a5a00; }
+    .source-link { color: var(--blue); word-break: break-all; font-weight: 700; }
+    .search-bar { width: 100%; margin-bottom: 16px; }
+    .section-grid { display: grid; gap: 16px; }
+    .two-col { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .three-col { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .users-flex-container { display: flex; gap: 18px; align-items: start; flex-wrap: wrap; }
+    .users-flex-item { flex: 1 1 420px; min-width: 360px; }
+    .table-tools { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+
+    .donut-wrap { display: grid; grid-template-columns: 170px 1fr; gap: 16px; align-items: center; }
+    .donut {
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      background: conic-gradient(#e5e7eb 0 100%);
+      position: relative;
+      margin: 0 auto;
+    }
+    .donut:after { content: ""; position: absolute; inset: 34px; background: #fff; border-radius: 50%; }
+    .legend { display: grid; gap: 13px; font-size: 13px; }
+    .legend-row { display: grid; grid-template-columns: 10px 1fr auto; gap: 9px; align-items: center; }
+    .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+    .log-terminal {
+      height: 360px;
+      overflow: auto;
+      background: #061024;
+      color: #c9d7ea;
+      border-radius: var(--radius);
+      padding: 14px;
+      font-family: "Consolas", monospace;
+      font-size: 12px;
+      line-height: 1.55;
+    }
+    .context-menu {
+      position: absolute;
+      display: none;
+      z-index: 999;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      min-width: 220px;
+    }
+    .context-menu-item { padding: 12px 14px; font-size: 13px; cursor: pointer; display: flex; gap: 10px; align-items: center; }
+    .context-menu-item:hover { background: #f4f7fb; }
+    .hidden { display: none !important; }
+
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(7,18,41,.62);
+      z-index: 1000;
+      place-items: center;
+      padding: 20px;
+    }
+    .modal-content {
+      width: min(100%, 520px);
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: 0 28px 80px rgba(7,18,41,.28);
+      padding: 22px;
+      color: var(--ink);
+    }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+    .modal-close { border: 0; background: #eef3fb; color: #172744; width: 34px; height: 34px; border-radius: 50%; font-size: 20px; }
+    .input-group { margin-bottom: 14px; }
+    .input-group label { color: var(--muted); display: block; margin-bottom: 6px; font-size: 13px; font-weight: 700; }
+    .input-group input, .input-group select { width: 100%; min-height: 42px; border: 1px solid var(--line); border-radius: var(--radius); padding: 0 12px; }
+    .detail-row { display: flex; justify-content: space-between; gap: 18px; border-bottom: 1px solid #edf1f7; padding: 10px 0; }
+    .detail-label { color: var(--muted); font-size: 13px; font-weight: 700; }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 12;
+      padding: 10px 0 16px;
+      background: rgba(244,247,251,.86);
+      backdrop-filter: blur(14px);
+    }
+    .page-enter { animation: pageEnter .24s ease both; }
+    .stat-card, .card, .list-card, .data-table tr {
+      transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease;
+    }
+    .stat-card:hover, .card:hover {
+      transform: translateY(-2px);
+      border-color: #cbd8ec;
+      box-shadow: 0 22px 54px rgba(16, 35, 73, 0.11);
+    }
+    .list-card:hover, .data-table tbody tr:hover {
+      background: #fbfcff;
+    }
+    .btn i:last-child { transition: transform .18s ease; }
+    .btn:hover i:last-child { transform: translateX(3px); }
+    .field input:focus, .field select:focus, .field textarea:focus, .search-bar:focus, .search-wrap:focus-within {
+      border-color: #9abfff;
+      box-shadow: 0 0 0 4px rgba(36,117,255,.11);
+      outline: 0;
+    }
+    .admin-skeleton-stack { display: grid; gap: 10px; }
+    .admin-skeleton-row {
+      min-height: 58px;
+      border: 1px solid #edf1f7;
+      border-radius: var(--radius);
+      background: #fff;
+      display: grid;
+      grid-template-columns: 1.4fr .8fr .55fr;
+      gap: 18px;
+      align-items: center;
+      padding: 12px;
+    }
+    .admin-skeleton-row span, .admin-skeleton-text {
+      position: relative;
+      overflow: hidden;
+      color: transparent !important;
+      background: #e8eef7;
+      border-radius: 8px;
+      min-height: 13px;
+    }
+    .admin-skeleton-row span:nth-child(2) { width: 72%; }
+    .admin-skeleton-row span:nth-child(3) { width: 54%; justify-self: end; }
+    .admin-skeleton-row span::after, .admin-skeleton-text::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      transform: translateX(-100%);
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.68), transparent);
+      animation: skeletonSweep 1.25s ease-in-out infinite;
+    }
+    .admin-toast-stack {
+      position: fixed;
+      top: 18px;
+      right: 18px;
+      z-index: 2000;
+      display: grid;
+      gap: 10px;
+      width: min(360px, calc(100vw - 36px));
+    }
+    .admin-toast {
+      min-height: 48px;
+      border-radius: var(--radius);
+      padding: 13px 16px;
+      color: #fff;
+      box-shadow: 0 18px 42px rgba(16,35,73,.22);
+      animation: toastIn .22s ease both;
+    }
+    .admin-toast.is-success { background: var(--blue); }
+    .admin-toast.is-error { background: var(--red); }
+    .admin-toast.is-leaving { animation: toastOut .22s ease forwards; }
+    @keyframes pageEnter { from { opacity: .72; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes skeletonSweep { to { transform: translateX(100%); } }
+    @keyframes toastIn { from { opacity: 0; transform: translateX(18px); } to { opacity: 1; transform: translateX(0); } }
+    @keyframes toastOut { to { opacity: 0; transform: translateX(18px); } }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+    }
+
+    @media (max-width: 1280px) {
+      .stats-grid { grid-template-columns: repeat(3, minmax(180px, 1fr)); }
+      .dashboard-grid, .lower-grid, .bottom-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 900px) {
+      .app-shell { display: block; }
+      .sidebar { position: static; width: 100%; min-height: auto; }
+      .main-content { width: 100%; margin-left: 0; padding: 20px; }
+      .topbar { display: grid; }
+      .top-actions { justify-content: start; }
+      .stats-grid, .two-col, .three-col, .importer-grid, .form-grid { grid-template-columns: 1fr; }
+      .form-grid .span-2 { grid-column: auto; }
+      .users-flex-item { min-width: 100%; }
+      .donut-wrap { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="logo"><img src="hireke-logo.png" alt="HireKe logo" /></div>
+      <div class="admin-card">
+        <div class="admin-avatar">A</div>
+        <div>
+          <div class="admin-eyebrow">Hello,</div>
+          <div class="admin-name" id="adminDisplayName">Administrator</div>
+          <span class="role-pill">Admin</span>
+        </div>
+      </div>
+
+      <ul class="nav-menu">
+        <li class="active"><a href="#" class="menu-link" data-page="overview"><i class="fa-solid fa-house"></i>Overview</a></li>
+        <li><a href="#" class="menu-link" data-page="analytics"><i class="fa-solid fa-chart-line"></i>Analytics</a></li>
+        <li><a href="#" class="menu-link" data-page="jobs"><i class="fa-solid fa-briefcase"></i>Jobs Management</a></li>
+        <li><a href="#" class="menu-link" data-page="opportunity-importer"><i class="fa-solid fa-file-import"></i>Opportunity Importer</a></li>
+        <li><a href="#" class="menu-link" data-page="recruiters"><i class="fa-regular fa-user"></i>Recruiters</a></li>
+        <li><a href="#" class="menu-link" data-page="users"><i class="fa-solid fa-users"></i>Users</a></li>
+        <li><a href="#" class="menu-link" data-page="payments"><i class="fa-regular fa-credit-card"></i>Payments</a></li>
+        <li><a href="#" class="menu-link" data-page="reports"><i class="fa-regular fa-file-lines"></i>Reports</a></li>
+        <li><a href="#" class="menu-link" data-page="verification"><i class="fa-regular fa-circle-check"></i>Verification<span id="verificationBadge" class="nav-badge" style="display:none;">0</span></a></li>
+        <li><a href="#" class="menu-link" data-page="messages"><i class="fa-regular fa-envelope"></i>Messages<span id="messagesBadge" class="nav-badge blue" style="display:none;">0</span></a></li>
+        <li><a href="#" class="menu-link" data-page="logs"><i class="fa-regular fa-rectangle-list"></i>System Logs</a></li>
+        <li><a href="#" class="menu-link" data-page="settings"><i class="fa-solid fa-gear"></i>Settings</a></li>
+      </ul>
+
+      <div class="sidebar-footer">
+        <div class="system-card">
+          <strong>System Status</strong>
+          <p><span class="dot"></span>All Systems Operational</p>
+        </div>
+        <a href="#" id="adminLogoutBtn"><i class="fa-solid fa-arrow-right-from-bracket"></i>Logout</a>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div id="dbDisconnectAlert" class="alert-banner">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span><strong>Database Connection Lost.</strong> System functions may be limited. <a href="#" onclick="reconnectDB()" style="color: inherit; text-decoration: underline; font-weight: 800;">Attempt reconnect</a></span>
+      </div>
+
+      <header class="topbar">
+        <div>
+          <h1 class="page-title" id="currentPageTitle">Dashboard Overview</h1>
+          <p class="page-subtitle" id="currentPageSubtitle">Welcome back. Here's what's happening with your platform today.</p>
+        </div>
+        <div class="top-actions">
+          <label class="search-wrap" for="globalSearchInput">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input id="globalSearchInput" type="search" placeholder="Search anything...">
+          </label>
+          <button class="icon-button" type="button" onclick="navigateAdminPage('messages')" title="Messages">
+            <i class="fa-regular fa-bell"></i>
+            <span id="notificationBadge" class="notification-dot" style="display:none;">0</span>
+          </button>
+          <div class="avatar">DO<span class="dot" style="position:absolute; right:0; bottom:2px; border:2px solid #fff; margin:0;"></span></div>
+        </div>
+      </header>
+
+      <section id="overview" class="page-section active">
+        <div class="toolbar">
+          <div class="date-filter"><i class="fa-regular fa-calendar"></i><span id="dateRangeLabel">Last 7 days</span><i class="fa-solid fa-chevron-down"></i></div>
+          <button class="btn btn-secondary" id="downloadReportBtn"><i class="fa-regular fa-file-lines"></i>Export Report</button>
+          <button class="btn btn-success" onclick="triggerTestEmail()"><i class="fa-regular fa-paper-plane"></i>Send Report</button>
+          <button class="btn btn-primary" onclick="showAddAdminModal()"><i class="fa-solid fa-plus"></i>Add Admin</button>
+          <button class="btn btn-secondary" onclick="showAdminsOverview()"><i class="fa-solid fa-user-shield"></i>Admins</button>
+          <input type="hidden" id="reportMonth" value="">
+        </div>
+
+        <div class="stats-grid">
+          <article class="stat-card">
+            <div class="stat-icon blue"><i class="fa-solid fa-coins"></i></div>
+            <div><div class="stat-label">Total Revenue</div><div class="stat-value" id="statRevenue">KES 0</div><div class="trend"><span id="revenueTrendLabel">Real payments only</span></div></div>
+            <i class="fa-solid fa-ellipsis more-dot"></i>
+          </article>
+          <article class="stat-card">
+            <div class="stat-icon green"><i class="fa-solid fa-user-group"></i></div>
+            <div><div class="stat-label">Platform Users</div><div class="stat-value" id="statUsers">0</div><div class="trend"><span>Real accounts</span></div></div>
+            <i class="fa-solid fa-ellipsis more-dot"></i>
+          </article>
+          <article class="stat-card">
+            <div class="stat-icon blue"><i class="fa-solid fa-users-gear"></i></div>
+            <div><div class="stat-label">Verified Recruiters</div><div class="stat-value" id="statRecruiters">0</div><div class="trend"><span>Approved recruiters</span></div></div>
+            <i class="fa-solid fa-ellipsis more-dot"></i>
+          </article>
+          <article class="stat-card">
+            <div class="stat-icon amber"><i class="fa-solid fa-briefcase"></i></div>
+            <div><div class="stat-label">Approved Jobs</div><div class="stat-value" id="statJobs">0</div><div class="trend"><span>Public listings</span></div></div>
+            <i class="fa-solid fa-ellipsis more-dot"></i>
+          </article>
+          <article class="stat-card">
+            <div class="stat-icon purple"><i class="fa-solid fa-ranking-star"></i></div>
+            <div><div class="stat-label">Most Active Recruiter</div><div class="stat-value" id="statMostActive" style="font-size: 16px; padding-top: 4px;">N/A</div><div class="trend"><span>By approved jobs</span></div></div>
+            <i class="fa-solid fa-ellipsis more-dot"></i>
+          </article>
+        </div>
+
+        <div class="dashboard-grid">
+          <div class="card">
+            <div class="card-header"><h2 class="section-title">Job Posting Activity</h2><span class="date-filter" style="height:30px;">7 Days</span></div>
+            <div class="chart-box"><canvas id="jobTrendsChart"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h2 class="section-title">Revenue Overview</h2><span class="date-filter" style="height:30px;">7 Days</span></div>
+            <div class="chart-box"><canvas id="revenueGrowthChart"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h2 class="section-title">Platform Health</h2><span class="status-good">All Good</span></div>
+            <div class="health-list">
+              <div class="health-row"><span><i class="fa-solid fa-circle-check"></i>Database</span><span>Operational</span></div>
+              <div class="health-row"><span><i class="fa-solid fa-circle-check"></i>API Services</span><span>Operational</span></div>
+              <div class="health-row"><span><i class="fa-solid fa-circle-check"></i>Payment Gateway</span><span>Operational</span></div>
+              <div class="health-row"><span><i class="fa-solid fa-circle-check"></i>Email Service</span><span>Operational</span></div>
+              <div class="health-row"><span><i class="fa-solid fa-circle-check"></i>File Storage</span><span>Operational</span></div>
+            </div>
+            <button class="btn btn-secondary" style="width:100%;" onclick="navigateAdminPage('logs')"><i class="fa-regular fa-file-lines"></i>View System Logs<i class="fa-solid fa-chevron-right"></i></button>
+          </div>
+        </div>
+
+        <div class="lower-grid">
+          <div class="card">
+            <div class="card-header"><h2 class="section-title">Pending Verifications <span id="pendingVerificationInlineBadge" class="nav-badge" style="position:static; display:none;">0</span></h2><button class="section-link" onclick="navigateAdminPage('verification')">View All</button></div>
+            <div id="pendingRecruitersContainer" class="list-stack"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h2 class="section-title">Jobs Awaiting Approval</h2><button class="section-link" onclick="navigateAdminPage('jobs')">View All</button></div>
+            <div id="pendingJobsContainer" class="list-stack"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h2 class="section-title">Top Recruiters</h2><button class="section-link" onclick="navigateAdminPage('recruiters')">View All</button></div>
+            <div id="topRecruitersContainer" class="list-stack"><p class="placeholder-text">No recruiters found.</p></div>
+          </div>
+        </div>
+
+        <div class="bottom-grid">
+          <div class="card">
+            <div class="card-header">
+              <h2 class="section-title">Recent Transactions</h2>
+              <div class="table-tools">
+                <input type="text" id="transactionSearch" class="field input" placeholder="Search transaction..." style="min-height:36px; border:1px solid var(--line); border-radius:8px; padding:0 12px;">
+                <button class="section-link" onclick="navigateAdminPage('payments')">View All</button>
+              </div>
+            </div>
+            <div id="recentTransactionsContainer"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h2 class="section-title">Revenue by Source</h2></div>
+            <div id="revenueBySourceContainer" class="donut-wrap"><p class="placeholder-text">No revenue data yet.</p></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="analytics" class="page-section">
+        <div class="section-grid two-col">
+          <div class="card"><div class="card-header"><h2 class="section-title">Job Posting Activity</h2></div><div class="chart-box"><canvas id="jobTrendsChartAnalytics"></canvas></div></div>
+          <div class="card"><div class="card-header"><h2 class="section-title">Revenue Overview</h2></div><div class="chart-box"><canvas id="revenueGrowthChartAnalytics"></canvas></div></div>
+        </div>
+      </section>
+
+      <section id="jobs" class="page-section">
+        <div class="section-grid">
+          <div class="card"><div class="card-header"><h2 class="section-title">Jobs Awaiting Approval</h2></div><div id="pendingJobsContainerJobs"></div></div>
+          <div class="card"><div class="card-header"><h2 class="section-title">All Platform Jobs</h2></div><div id="allJobsContainer"></div></div>
+        </div>
+      </section>
+
+      <section id="opportunity-importer" class="page-section">
+        <div class="section-grid">
+          <div class="card">
+            <div class="card-header">
+              <h2 class="section-title">Import From URL</h2>
+              <button class="btn btn-secondary" type="button" onclick="resetOpportunityForm()"><i class="fa-solid fa-rotate-left"></i>Clear</button>
+            </div>
+            <div class="form-row">
+              <div class="field" style="flex:1 1 420px;">
+                <label for="importSourceUrl">Trusted source URL</label>
+                <input type="url" id="importSourceUrl" placeholder="https://example.org/opportunity" autocomplete="off">
+              </div>
+              <button class="btn btn-primary" type="button" id="importUrlBtn" onclick="handleImportUrl()"><i class="fa-solid fa-wand-magic-sparkles"></i>Extract</button>
+            </div>
+            <div id="importStatus" class="notice" style="display:none; margin-top:14px;"></div>
+          </div>
+
+          <div class="importer-grid">
+            <div class="card">
+              <div class="card-header"><h2 class="section-title">Manual Add / Review</h2><span class="status-badge status-online" id="opportunityModeBadge"><span>New draft</span></span></div>
+              <form id="opportunityForm" class="form-grid" onsubmit="handleOpportunitySubmit(event)">
+                <input type="hidden" id="opportunityId">
+                <input type="hidden" id="opportunityOverrideDuplicate" value="0">
+                <div class="field"><label for="oppTitle">Title</label><input id="oppTitle" required></div>
+                <div class="field"><label for="oppOrganization">Organization</label><input id="oppOrganization" required></div>
+                <div class="field">
+                  <label for="oppCategory">Category</label>
+                  <select id="oppCategory">
+                    <option>Jobs</option><option>Internships</option><option>Scholarships</option><option>Grants</option>
+                    <option>Tenders</option><option>Fellowships</option><option>Competitions</option><option>Training Programs</option>
+                  </select>
+                </div>
+                <div class="field"><label for="oppLocation">Location</label><input id="oppLocation" required></div>
+                <div class="field"><label for="oppDeadline">Deadline</label><input id="oppDeadline" type="date"></div>
+                <div class="field">
+                  <label for="oppStatus">Status</label>
+                  <select id="oppStatus"><option value="pending_review">Pending review</option><option value="approved">Approved</option><option value="rejected">Rejected</option></select>
+                </div>
+                <div class="field span-2"><label for="oppDescription">Description</label><textarea id="oppDescription" required></textarea></div>
+                <div class="field span-2"><label for="oppRequirements">Requirements</label><textarea id="oppRequirements" placeholder="One requirement per line"></textarea></div>
+                <div class="field">
+                  <label for="oppApplicationMethod">Application Method</label>
+                  <select id="oppApplicationMethod"><option value="external_website">Website</option><option value="email">Email</option><option value="whatsapp">WhatsApp</option><option value="easy_apply">HireKe Easy Apply</option></select>
+                </div>
+                <div class="field"><label for="oppApplicationTarget">Application URL / Email / WhatsApp</label><input id="oppApplicationTarget"></div>
+                <div class="field"><label for="oppSourceUrl">Source URL</label><input id="oppSourceUrl" type="url"></div>
+                <div class="field"><label for="oppSourceName">Source Name</label><input id="oppSourceName"></div>
+                <div class="field"><label for="oppSourceType">Source Type</label><input id="oppSourceType" placeholder="Website, NGO, Government..."></div>
+                <div class="field">
+                  <label for="oppVerified">Verification</label>
+                  <select id="oppVerified"><option value="0">Unverified</option><option value="1">Verified</option></select>
+                </div>
+                <div class="span-2" id="duplicateWarning" style="display:none;"></div>
+                <div class="span-2 action-buttons">
+                  <button class="btn btn-primary" type="submit"><i class="fa-regular fa-floppy-disk"></i>Save Pending Review</button>
+                  <button class="btn btn-success" type="button" onclick="saveOpportunityAsApproved()"><i class="fa-regular fa-circle-check"></i>Save & Approve</button>
+                </div>
+              </form>
+            </div>
+
+            <div class="card">
+              <div class="card-header"><h2 class="section-title">Trusted Sources</h2></div>
+              <form id="sourceForm" class="section-grid" onsubmit="handleSourceSubmit(event)">
+                <div class="field"><label for="sourceName">Name</label><input id="sourceName" required></div>
+                <div class="field"><label for="sourceUrl">URL</label><input id="sourceUrl" type="url" required></div>
+                <div class="field"><label for="sourceType">Type</label><input id="sourceType" placeholder="Job board, NGO, government"></div>
+                <div class="field"><label for="sourceCategory">Category</label><input id="sourceCategory" placeholder="Jobs, Grants, Tenders"></div>
+                <div class="field"><label for="sourceActive">Status</label><select id="sourceActive"><option value="1">Active</option><option value="0">Inactive</option></select></div>
+                <button class="btn btn-secondary" type="submit"><i class="fa-solid fa-plus"></i>Add Source</button>
+              </form>
+              <div id="trustedSourcesContainer" style="margin-top:16px;"></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><h2 class="section-title">Pending Review</h2><button class="btn btn-secondary" onclick="loadImportedOpportunities()"><i class="fa-solid fa-rotate"></i>Refresh</button></div>
+            <div id="importedOpportunitiesContainer"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="recruiters" class="page-section">
+        <div class="card">
+          <div class="card-header"><h2 class="section-title">Recruiter Management</h2><button class="btn btn-secondary" onclick="navigateAdminPage('verification')"><i class="fa-regular fa-circle-check"></i>Verification Queue</button></div>
+          <div id="recruitersContainer"></div>
+        </div>
+      </section>
+
+      <section id="users" class="page-section">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="section-title">User Management</h2>
+            <div class="table-tools">
+              <button class="btn btn-primary" onclick="showAddAdminModal()"><i class="fa-solid fa-user-shield"></i>Add Admin / Moderator</button>
+              <button class="btn btn-danger hidden" id="bulkDeleteBtn" onclick="handleBulkDelete()"><i class="fa-regular fa-trash-can"></i>Delete Selected</button>
+            </div>
+          </div>
+          <input type="text" id="userSearchInput" class="search-bar" placeholder="Search by name or email...">
+          <div id="usersContainer" class="users-flex-container"></div>
+        </div>
+      </section>
+
+      <section id="payments" class="page-section">
+        <div class="section-grid">
+          <div class="card">
+            <div class="card-header"><h2 class="section-title">Detailed Payment Statement</h2></div>
+            <div class="form-row">
+              <div class="field"><label for="statementStartDate">Start Date</label><input type="date" id="statementStartDate"></div>
+              <div class="field"><label for="statementEndDate">End Date</label><input type="date" id="statementEndDate"></div>
+              <button class="btn btn-primary" onclick="exportDetailedStatement()"><i class="fa-regular fa-file-lines"></i>Generate Statement</button>
+            </div>
+          </div>
+          <div class="card"><div class="card-header"><h2 class="section-title">Pending M-Pesa Verification</h2></div><div id="pendingPaymentsContainer"></div></div>
+          <div class="card"><div class="card-header"><h2 class="section-title">Approved Payments History</h2></div><div id="approvedPaymentsContainer"></div></div>
+        </div>
+      </section>
+
+      <section id="reports" class="page-section">
+        <div class="section-grid two-col">
+          <div class="card">
+            <div class="card-header"><h2 class="section-title">Send Report</h2></div>
+            <p class="placeholder-text">Send the daily platform transaction report to the configured admin email.</p>
+            <button class="btn btn-success" onclick="triggerTestEmail()"><i class="fa-regular fa-paper-plane"></i>Send Report Now</button>
+          </div>
+          <div class="card">
+            <div class="card-header"><h2 class="section-title">Export Report</h2></div>
+            <p class="placeholder-text">Download the current platform analytics summary as a PDF report.</p>
+            <button class="btn btn-primary" onclick="downloadPDFReport()"><i class="fa-regular fa-file-pdf"></i>Download PDF</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="verification" class="page-section">
+        <div class="section-grid two-col">
+          <div class="card"><div class="card-header"><h2 class="section-title">User Verification Queue</h2></div><div id="userVerificationQueueContainer"></div></div>
+          <div class="card"><div class="card-header"><h2 class="section-title">Pending Recruiter Verification</h2></div><div id="pendingRecruitersContainerVerification"></div></div>
+          <div class="card"><div class="card-header"><h2 class="section-title">Pending Payment Verification</h2></div><div id="pendingPaymentsContainerVerification"></div></div>
+        </div>
+      </section>
+
+      <section id="messages" class="page-section">
+        <div class="card">
+          <div class="card-header"><h2 class="section-title">Messages</h2></div>
+          <div id="adminMessagesContainer" class="list-stack"><p class="placeholder-text">No messages yet.</p></div>
+        </div>
+      </section>
+
+      <section id="logs" class="page-section">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="section-title">Real-time Server Logs</h2>
+            <div class="table-tools">
+              <div id="serverStatusIndicator" class="status-badge status-online"><div class="pulse pulse-online"></div><span>DB Connected</span></div>
+              <button class="btn btn-danger" onclick="clearLogs()">Clear Logs</button>
+              <button class="btn btn-secondary" onclick="fetchLogs()">Refresh Logs</button>
+            </div>
+          </div>
+          <div id="logTerminal" class="log-terminal"></div>
+        </div>
+      </section>
+
+      <section id="settings" class="page-section">
+        <div class="section-grid two-col">
+          <div class="card">
+            <div class="card-header"><h2 class="section-title">Admin Access</h2></div>
+            <button class="btn btn-primary" onclick="showAddAdminModal()"><i class="fa-solid fa-plus"></i>Add Admin / Moderator</button>
+            <button class="btn btn-secondary" onclick="showAdminsOverview()" style="margin-left: 8px;"><i class="fa-solid fa-user-shield"></i>View Admins</button>
+          </div>
+          <div class="card">
+            <div class="card-header"><h2 class="section-title">System Health</h2></div>
+            <button class="btn btn-secondary" onclick="reconnectDB()"><i class="fa-solid fa-rotate"></i>Reconnect Database</button>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="userProfileModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modalUserName">User Profile</h3>
+        <button class="modal-close" onclick="closeProfileModal()">&times;</button>
+      </div>
+      <div id="modalUserProfileDetails"></div>
+    </div>
+  </div>
+
+  <div id="addAdminModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Add Admin / Moderator</h3>
+        <button class="modal-close" onclick="closeAddAdminModal()">&times;</button>
+      </div>
+      <form id="addAdminForm" onsubmit="handleAddAdmin(event)">
+        <div class="input-group">
+          <label for="newAdminName">Full Name</label>
+          <input type="text" id="newAdminName" placeholder="Enter name" required>
+        </div>
+        <div class="input-group">
+          <label for="newAdminEmail">Email Address</label>
+          <input type="email" id="newAdminEmail" placeholder="admin@hireke.co.ke" required>
+        </div>
+        <div class="input-group">
+          <label for="newAdminRole">Access Level</label>
+          <select id="newAdminRole">
+            <option value="admin">Admin</option>
+            <option value="admin">Moderator</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <label for="newAdminPassword">Password</label>
+          <input type="password" id="newAdminPassword" placeholder="Create password" required>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%;"><i class="fa-solid fa-user-shield"></i>Create Account</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="userContextMenu" class="context-menu">
+    <div class="context-menu-item" id="ctxResetPassword"><i class="fas fa-key"></i> Quick Reset Password</div>
+    <div class="context-menu-item" id="ctxViewProfile"><i class="fas fa-user-circle"></i> View Profile Details</div>
+    <div class="context-menu-item" id="ctxSuspendUser"><i class="fas fa-ban"></i> Suspend/Unsuspend Account</div>
+  </div>
+
+  <audio id="errorNotificationSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" preload="auto"></audio>
+  <script src="/admin-dashboard.js"></script>
+</body>
+</html>
