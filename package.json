@@ -1,3 +1,6 @@
+"engines": {
+  "node": "22.x"
+}
 {
   "name": "hireke",
   "version": "1.0.0",
