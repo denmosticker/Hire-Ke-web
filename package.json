@@ -15,6 +15,9 @@
   ],
   "author": "",
   "license": "ISC",
+  "engines": {
+    "node": "22.x"
+  },
   "dependencies": {
     "@emailjs/nodejs": "^5.0.2",
     "@xenova/transformers": "^2.17.2",
@@ -33,17 +36,4 @@
     "sqlite3": "^6.0.1",
     "stripe": "^12.0.0"
   }
-  {
-  "name": "hireke",
-  "version": "1.0.0",
-  "main": "server.js",
-  "scripts": {
-    "start": "node server.js"
-  },
-  "engines": {
-    "node": "22.x"
-  },
-  "dependencies": {
-  }
-}
 }
