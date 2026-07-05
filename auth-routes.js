@@ -6,7 +6,8 @@ const crypto = require('crypto');
 const router = express.Router();
 const { sendContactToBrevo } = require('./brevoService'); // Import Brevo service
 const db = require('./database');
-const SMTP_TIMEOUT_MS = Number(process.env.SMTP_TIMEOUT_MS || 8000);
+const SMTP_TIMEOUT_MS = Number(process.env.SMTP_TIMEOUT_MS || 5000);
+const isProduction = process.env.NODE_ENV === 'production';
 
 // Configure email service
 let transporter;
@@ -29,6 +30,11 @@ async function initializeEmailService() {
         },
       });
       console.log('✓ Email service initialized with custom SMTP');
+      return;
+    }
+
+    if (isProduction) {
+      console.warn('Email service is not configured. Set SMTP_HOST, SMTP_USER, and SMTP_PASS to send OTP emails.');
       return;
     }
 
@@ -269,7 +275,9 @@ function sendSocialSuccess(res, payload) {
 // Helper to send OTP email
 async function sendOTPEmail(email, otp) {
   if (!transporter) {
-    const errorMsg = 'Email service not initialized. Check server logs for configuration errors.';
+    const errorMsg = isProduction
+      ? 'Email verification is not configured yet. Please contact support or try again later.'
+      : 'Email service not initialized. Check server logs for configuration errors.';
     console.error('✗ ' + errorMsg);
     throw new Error(errorMsg);
   }
@@ -279,7 +287,7 @@ async function sendOTPEmail(email, otp) {
   }
 
   const mailOptions = {
-    from: '"HireKe" <noreply@hireke.com>',
+    from: process.env.SMTP_FROM || process.env.SMTP_USER || '"HireKe" <noreply@hireke.com>',
     to: email,
     subject: 'HireKe Verification Code', // Ensure this is a string, not a variable named subjectline
     html: `
@@ -546,14 +554,27 @@ router.post('/signup', async (req, res) => {
       );
     }
 
-    const testOTP = await createVerificationOTP(result.lastID, email);
+    let verificationSent = false;
+    let testOTP;
+    let verificationError;
 
-    res.json({
+    try {
+      testOTP = await createVerificationOTP(result.lastID, email);
+      verificationSent = true;
+    } catch (emailError) {
+      verificationError = emailError.message;
+      console.error('Signup verification email failed:', verificationError);
+    }
+
+    res.status(verificationSent ? 200 : 202).json({
       success: true,
       requiresVerification: true,
-      verificationSent: true,
+      verificationSent,
       email,
-      message: 'Account created. Verification code sent to your email.',
+      message: verificationSent
+        ? 'Account created. Verification code sent to your email.'
+        : 'Account created, but the verification email could not be sent.',
+      verificationError,
       testOTP: exposeTestOtp() ? testOTP : undefined,
     });
   } catch (error) {

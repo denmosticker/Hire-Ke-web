@@ -843,16 +843,7 @@ document.addEventListener('DOMContentLoaded', () => {
           return;
         }
 
-// Send SIGNUP verification OTP
-        const otpResponse = await fetch(`${API_BASE_URL}/auth/send-verification-otp`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email }),
-        });
-
-        const otpData = await otpResponse.json();
-
-        if (otpResponse.ok && otpData && otpData.success) {
+        if (data.requiresVerification && data.verificationSent) {
           showToast('Verification code sent to your email. Please check your inbox.');
 
           // Configure OTP flow to be signup verification (NOT password reset)
@@ -872,7 +863,15 @@ document.addEventListener('DOMContentLoaded', () => {
           toggleModal(forgotPasswordModal, true);
           forgotPasswordState.source = 'signup'; // Mark source as signup
         } else {
-          const msg = otpData?.error || 'Failed to send OTP';
+          const msg = data.verificationError || data.error || 'Account created, but we could not send the OTP. Please try resending from the verification screen.';
+          forgotPasswordState.mode = 'signup-verification';
+          forgotPasswordState.email = email;
+          forgotPasswordState.resetToken = '';
+          forgotPasswordState.source = 'signup';
+          showForgotPasswordStep(2);
+          toggleModal(authModal, false);
+          toggleModal(roleModal, false);
+          toggleModal(forgotPasswordModal, true);
           showToast(msg);
         }
       } catch (err) {

@@ -2692,7 +2692,19 @@ password-toggle:focus{
   border:64px solid rgba(7,29,73,.12);
 }
 
-.auth-experience.modal,
+.auth-experience.modal{
+  position:fixed;
+  inset:0;
+  display:grid;
+  place-items:center;
+  padding:16px;
+  min-height:100dvh;
+  overflow:auto;
+  background:
+    radial-gradient(circle at 76% 15%, rgba(255,255,255,.16), transparent 22%),
+    linear-gradient(145deg, #79c4ff 0%, #53a8ef 42%, #77c5ff 100%);
+}
+
 .auth-page.auth-experience{
   position:relative;
   background:
