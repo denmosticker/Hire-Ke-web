@@ -558,6 +558,14 @@ nav a:hover{
   display:none !important;
 }
 
+html.auth-restoring #loginBtn,
+html.auth-restoring #signupBtn,
+html.auth-restoring #sidebar-login,
+html.auth-restoring #sidebar-signup{
+  visibility:hidden;
+  pointer-events:none;
+}
+
 .hero{
   background:linear-gradient(to right, #08124a, #0f1d77);
   color:white;
@@ -3594,52 +3602,6 @@ password-toggle:focus{
 @keyframes hkSpin{
   to{ transform:rotate(360deg); }
 }
-
-.auth-divider{
-  display:flex;
-  align-items:center;
-  gap:12px;
-  color:rgba(255,255,255,.82);
-  font-size:14px;
-  margin:18px 0;
-}
-
-.auth-divider::before,
-.auth-divider::after{
-  content:"";
-  flex:1;
-  height:1px;
-  background:rgba(255,255,255,.24);
-}
-
-.social-auth-row{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:14px;
-}
-
-.social-auth-btn{
-  min-height:44px;
-  border:0;
-  border-radius:8px;
-  background:rgba(255,255,255,.96);
-  color:#071638;
-  cursor:pointer;
-  display:grid;
-  place-items:center;
-  font-size:20px;
-  box-shadow:0 10px 22px rgba(7,29,73,.12);
-  transition:transform .18s ease, box-shadow .18s ease;
-}
-
-.social-auth-btn:hover{
-  transform:translateY(-2px);
-  box-shadow:0 14px 28px rgba(7,29,73,.18);
-}
-
-.social-auth-btn[data-social-provider="google"] i{ color:#4285f4; }
-.social-auth-btn[data-social-provider="github"] i{ color:#0f172a; }
-.social-auth-btn[data-social-provider="facebook"] i{ color:#1877f2; }
 
 .auth-glass-panel .auth-footer,
 .auth-card.auth-glass-panel .auth-footer{

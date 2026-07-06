@@ -1769,6 +1769,7 @@ document.addEventListener('DOMContentLoaded', () => {
       updatePersonalUI();
       renderAlerts();
       renderAllAlerts();
+      document.documentElement.classList.remove('auth-restoring');
       return;
     }
 
@@ -1804,6 +1805,7 @@ document.addEventListener('DOMContentLoaded', () => {
     updatePersonalUI();
     renderAlerts();
     renderAllAlerts();
+    document.documentElement.classList.remove('auth-restoring');
   }
 
   async function loadEditableProfile() {
@@ -2259,10 +2261,6 @@ document.addEventListener('DOMContentLoaded', () => {
   el('verification-resend').addEventListener('click', resendVerificationCode);
   el('verification-close').addEventListener('click', () => toggleModal(verificationModal, false));
   el('forgot-password-link')?.addEventListener('click', startPasswordReset);
-  document.querySelectorAll('[data-social-provider]').forEach((button) => {
-    button.addEventListener('click', () => startSocialAuth(button.dataset.socialProvider, button));
-  });
-
   el('profile-form').addEventListener('submit', async (event) => {
     event.preventDefault();
     if (!requireAuth()) return;

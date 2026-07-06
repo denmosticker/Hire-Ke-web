@@ -7,6 +7,17 @@
   <base href="/" />
   <meta name="description" content="HireKe - Opportunity dashboard for jobs, scholarships, grants, tenders, fellowships, training, and remote work." />
   <title>HireKe | Opportunity Dashboard</title>
+  <link rel="icon" type="image/png" href="favicon.png" />
+  <link rel="apple-touch-icon" href="favicon.png" />
+  <script>
+    (function () {
+      try {
+        if (localStorage.getItem('token')) {
+          document.documentElement.classList.add('auth-restoring');
+        }
+      } catch (_) {}
+    })();
+  </script>
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css" />
@@ -409,12 +420,6 @@
         <div id="auth-industry-container" class="input-group hidden"><label for="auth-industry">Industry</label><input id="auth-industry" type="text" placeholder="ICT, finance, construction..." /></div>
         <div id="auth-company-container" class="input-group hidden"><label for="auth-company">Company Name</label><input id="auth-company" type="text" placeholder="Your company" /></div>
         <button type="submit" id="auth-submit-btn" class="primary-btn loading-btn"><span class="btn-label">Continue</span><span class="btn-spinner" aria-hidden="true"></span></button>
-        <div class="auth-divider"><span>or continue with</span></div>
-        <div class="social-auth-row" aria-label="Social sign in options">
-          <button type="button" class="social-auth-btn" data-social-provider="google" aria-label="Continue with Google"><i class="fa-brands fa-google"></i></button>
-          <button type="button" class="social-auth-btn" data-social-provider="github" aria-label="Continue with GitHub"><i class="fa-brands fa-github"></i></button>
-          <button type="button" class="social-auth-btn" data-social-provider="facebook" aria-label="Continue with Facebook"><i class="fa-brands fa-facebook"></i></button>
-        </div>
         <div class="auth-footer"><span id="auth-role-hint">Not signed up yet?</span><button id="auth-switch" type="button" class="text-button">Create account</button></div>
       </form>
     </div>
