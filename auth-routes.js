@@ -17,15 +17,24 @@ if (typeof dns.setDefaultResultOrder === 'function') {
 // Configure email service
 let transporter;
 
+function smtpConnectionOptions() {
+  const host = process.env.SMTP_HOST;
+  const isGmail = /(^|\.)gmail\.com$/i.test(host || '');
+  const useGmailSsl = isProduction && isGmail && process.env.SMTP_ALLOW_STARTTLS !== 'true';
+  const port = Number(useGmailSsl ? 465 : process.env.SMTP_PORT || 587);
+  const secure = useGmailSsl ? true : process.env.SMTP_SECURE === 'true';
+
+  return { host, port, secure };
+}
+
 // Initialize email transporter
 async function initializeEmailService() {
   try {
     // Check if custom SMTP is configured
     if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+      const smtpOptions = smtpConnectionOptions();
       transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST,
-        port: process.env.SMTP_PORT || 587,
-        secure: process.env.SMTP_SECURE === 'true',
+        ...smtpOptions,
         family: 4,
         connectionTimeout: SMTP_TIMEOUT_MS,
         greetingTimeout: SMTP_TIMEOUT_MS,
@@ -35,7 +44,7 @@ async function initializeEmailService() {
           pass: process.env.SMTP_PASS,
         },
       });
-      console.log('✓ Email service initialized with custom SMTP');
+      console.log(`✓ Email service initialized with custom SMTP (${smtpOptions.host}:${smtpOptions.port}, secure=${smtpOptions.secure})`);
       return;
     }
 
