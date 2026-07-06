@@ -43,4 +43,28 @@ async function sendContactToBrevo(email, firstName, role, county, industry) {
   }
 }
 
-module.exports = { sendContactToBrevo };
+async function sendTransactionalEmail({ to, subject, html }) {
+  if (!BREVO_API_KEY) {
+    throw new Error('Brevo API Key is not configured.');
+  }
+
+  const senderEmail = process.env.BREVO_SENDER_EMAIL || process.env.SMTP_USER;
+  const senderName = process.env.BREVO_SENDER_NAME || 'HireKe';
+
+  if (!senderEmail) {
+    throw new Error('Brevo sender email is not configured.');
+  }
+
+  await axios.post(
+    'https://api.brevo.com/v3/smtp/email',
+    {
+      sender: { name: senderName, email: senderEmail },
+      to: [{ email: to }],
+      subject,
+      htmlContent: html,
+    },
+    { headers: { 'api-key': BREVO_API_KEY, 'Content-Type': 'application/json' } }
+  );
+}
+
+module.exports = { sendContactToBrevo, sendTransactionalEmail };

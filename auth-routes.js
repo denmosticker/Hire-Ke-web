@@ -5,7 +5,7 @@ const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 const dns = require('dns');
 const router = express.Router();
-const { sendContactToBrevo } = require('./brevoService'); // Import Brevo service
+const { sendContactToBrevo, sendTransactionalEmail } = require('./brevoService'); // Import Brevo service
 const db = require('./database');
 const SMTP_TIMEOUT_MS = Number(process.env.SMTP_TIMEOUT_MS || 5000);
 const isProduction = process.env.NODE_ENV === 'production';
@@ -301,11 +301,8 @@ async function sendOTPEmail(email, otp) {
     console.log('DEV OTP for', email, ':', otp);
   }
 
-  const mailOptions = {
-    from: process.env.SMTP_FROM || process.env.SMTP_USER || '"HireKe" <noreply@hireke.com>',
-    to: email,
-    subject: 'HireKe Verification Code', // Ensure this is a string, not a variable named subjectline
-    html: `
+  const subject = 'HireKe Verification Code';
+  const html = `
       <h2>Your OTP</h2>
       <p>Your One-Time Password (OTP) is below.</p>
       <h1 style="color: #007bff; letter-spacing: 5px;">${otp}</h1>
@@ -313,7 +310,26 @@ async function sendOTPEmail(email, otp) {
       <p>If you didn't request this, please ignore this email.</p>
       <hr>
       <p style="color: #666; font-size: 12px;">HireKe - Job Platform</p>
-    `,
+    `;
+
+  if (process.env.BREVO_API_KEY) {
+    try {
+      await sendTransactionalEmail({ to: email, subject, html });
+      console.log('✓ OTP email sent successfully with Brevo to:', email);
+      return;
+    } catch (error) {
+      console.error('✗ Brevo OTP email failed for', email, ':', error.response?.data || error.message);
+      if (!transporter) {
+        throw new Error(`Failed to send email: ${error.response?.data?.message || error.message}`);
+      }
+    }
+  }
+
+  const mailOptions = {
+    from: process.env.SMTP_FROM || process.env.SMTP_USER || '"HireKe" <noreply@hireke.com>',
+    to: email,
+    subject,
+    html,
   };
 
   try {
