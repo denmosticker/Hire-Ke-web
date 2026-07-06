@@ -3,11 +3,16 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
+const dns = require('dns');
 const router = express.Router();
 const { sendContactToBrevo } = require('./brevoService'); // Import Brevo service
 const db = require('./database');
 const SMTP_TIMEOUT_MS = Number(process.env.SMTP_TIMEOUT_MS || 5000);
 const isProduction = process.env.NODE_ENV === 'production';
+
+if (typeof dns.setDefaultResultOrder === 'function') {
+  dns.setDefaultResultOrder('ipv4first');
+}
 
 // Configure email service
 let transporter;
@@ -21,6 +26,7 @@ async function initializeEmailService() {
         host: process.env.SMTP_HOST,
         port: process.env.SMTP_PORT || 587,
         secure: process.env.SMTP_SECURE === 'true',
+        family: 4,
         connectionTimeout: SMTP_TIMEOUT_MS,
         greetingTimeout: SMTP_TIMEOUT_MS,
         socketTimeout: SMTP_TIMEOUT_MS,

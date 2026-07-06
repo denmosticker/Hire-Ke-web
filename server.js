@@ -5,6 +5,7 @@ const path = require('path');
 const cron = require('node-cron');
 const db = require('./database');
 const { createRateLimiter } = require('./rate-limit');
+const { seedAdminAccount } = require('./startup-admin');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -41,6 +42,9 @@ function validateEnvironment() {
 }
 
 validateEnvironment();
+seedAdminAccount().catch((error) => {
+  console.error('Failed to seed admin account:', error.message || error);
+});
 
 // Simple in-memory log buffer for the admin dashboard
 const serverLogs = [];
