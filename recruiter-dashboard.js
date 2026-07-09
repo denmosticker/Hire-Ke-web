@@ -10,15 +10,15 @@ function applyRecruiterTheme(theme) {
   localStorage.setItem(recruiterThemeKey, nextTheme);
   const button = document.getElementById('recruiter-theme-toggle');
   if (button) {
-    button.setAttribute('aria-label', nextTheme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode');
+    const label = nextTheme === 'dark' ? 'Light mode' : 'Dark mode';
+    button.setAttribute('aria-label', label);
+    button.setAttribute('title', label);
     button.innerHTML = `<i class="${nextTheme === 'dark' ? 'far fa-sun' : 'far fa-moon'}"></i>`;
   }
 }
 
 function preferredRecruiterTheme() {
-  const saved = localStorage.getItem(recruiterThemeKey);
-  if (saved === 'dark' || saved === 'light') return saved;
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  return 'light';
 }
 
 function showRecruiterToast(message, error = false) {
@@ -79,6 +79,9 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('recruiter-theme-toggle')?.addEventListener('click', () => {
     applyRecruiterTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
   });
+  document.getElementById('view-as-jobseeker')?.addEventListener('click', () => {
+    window.location.href = 'index.html?view=jobseeker';
+  });
 
   token = localStorage.getItem('token');
   if (!token) {
@@ -132,6 +135,7 @@ async function loadUserData() {
     setText('sidebarCompanyName', company);
     setText('sidebarRecruiterName', currentUser.name || 'Recruiter');
     setText('sidebarRecruiterCompany', company);
+    document.getElementById('recruiterNameInput').value = currentUser.name || '';
     document.getElementById('companyNameInput').value = currentUser.company_name || '';
     document.getElementById('companyWebsite').value = currentUser.company_url || '';
     document.getElementById('companyLogoUrl').value = currentUser.company_logo || '';
@@ -499,6 +503,7 @@ async function saveSettings() {
         Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
+        name: document.getElementById('recruiterNameInput').value,
         company_name: document.getElementById('companyNameInput').value,
         company_url: document.getElementById('companyWebsite').value,
         company_logo: document.getElementById('companyLogoUrl').value,
@@ -508,8 +513,11 @@ async function saveSettings() {
     if (!response.ok) throw new Error(data.error || 'Failed to save settings');
     currentUser = { ...currentUser, ...data.user };
     const company = currentUser.company_name || 'Your Company';
+    setText('userName', currentUser.name || 'Recruiter');
+    setText('userAvatar', (currentUser.name || 'R').charAt(0).toUpperCase());
     setText('companyName', company);
     setText('sidebarCompanyName', company);
+    setText('sidebarRecruiterName', currentUser.name || 'Recruiter');
     setText('sidebarRecruiterCompany', company);
     alert('Settings saved.');
   } catch (error) {

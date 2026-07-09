@@ -213,6 +213,74 @@ html[data-theme="dark"] .hk-profile-photo{
   color:#dbeafe;
 }
 
+html[data-theme="dark"] body.hk-home{
+  background:linear-gradient(180deg, #111827 0%, #0f172a 48%, #111827 100%);
+}
+
+html[data-theme="dark"] .hk-shell,
+html[data-theme="dark"] .hk-search-panel{
+  background:transparent;
+}
+
+html[data-theme="dark"] .hk-sidebar,
+html[data-theme="dark"] .hk-mobile-header,
+html[data-theme="dark"] .hk-topbar{
+  background:rgba(17, 24, 39, .94);
+  border-color:#263449;
+  box-shadow:0 18px 48px rgba(0,0,0,.22);
+}
+
+html[data-theme="dark"] .hk-panel,
+html[data-theme="dark"] .modal-panel,
+html[data-theme="dark"] .hk-entry-card,
+html[data-theme="dark"] .hk-settings-content > section,
+html[data-theme="dark"] .hk-settings-menu,
+html[data-theme="dark"] .hk-account-menu-popover,
+html[data-theme="dark"] .hk-search,
+html[data-theme="dark"] .hk-filter-body,
+html[data-theme="dark"] .hk-profile-body-grid > article,
+html[data-theme="dark"] .hk-profile-side article{
+  background:#182235;
+  border:1px solid #2d3b52;
+  box-shadow:0 16px 42px rgba(0,0,0,.24);
+}
+
+html[data-theme="dark"] .hk-opportunity{
+  background:transparent;
+  border-color:#2a3850;
+  box-shadow:none;
+}
+
+html[data-theme="dark"] .hk-opportunity:hover,
+html[data-theme="dark"] .hk-alert-item:hover,
+html[data-theme="dark"] .hk-activity-item:hover,
+html[data-theme="dark"] .hk-tips-list button:hover{
+  background:#202b3f;
+}
+
+html[data-theme="dark"] .hk-nav a.active,
+html[data-theme="dark"] .hk-nav a:hover,
+html[data-theme="dark"] .hk-card-apply-btn{
+  background:#2dd4bf !important;
+  color:#062d2a !important;
+  box-shadow:0 12px 28px rgba(45,212,191,.22);
+}
+
+html[data-theme="dark"] .hk-card-view-btn,
+html[data-theme="dark"] .hk-badge,
+html[data-theme="dark"] .hk-icon-toggle,
+html[data-theme="dark"] .secondary-btn{
+  background:#22304a !important;
+  border-color:#354763;
+  color:#d7e7ff !important;
+}
+
+html[data-theme="dark"] .hk-company-logo{
+  background:#0f766e;
+  border-color:#2dd4bf;
+  color:#ecfeff;
+}
+
 body{
   background:#eef4ff;
   color:#111827;
@@ -2263,6 +2331,31 @@ password-toggle:focus{
   cursor:pointer;
   padding:0;
   transition:color .18s ease, transform .18s ease;
+}
+
+.hk-opportunity-actions{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:8px;
+}
+
+.hk-opportunity-actions button{
+  min-height:34px;
+  padding:0 12px;
+  border-radius:8px;
+  font-weight:800;
+  white-space:nowrap;
+}
+
+.hk-card-view-btn{
+  background:#eaf2ff !important;
+  color:#0b56d0 !important;
+}
+
+.hk-card-apply-btn{
+  background:#071d49 !important;
+  color:#fff !important;
 }
 
 .hk-side-stack{
@@ -4500,8 +4593,19 @@ password-toggle:focus{
     display:none;
   }
 
-  .hk-opportunity-meta [data-job-id]{
-    display:none;
+  .hk-opportunity-actions{
+    grid-column:2 / 4;
+    justify-self:stretch;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+    margin-top:8px;
+  }
+
+  .hk-opportunity-actions button{
+    min-height:40px;
+    padding:0 10px;
+    font-size:13px;
   }
 
   .hk-save-inline{

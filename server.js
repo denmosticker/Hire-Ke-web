@@ -174,7 +174,10 @@ app.get('/profile/:id', (_req, res) => {
 
 // Health check
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'Server running' });
+  res.json({
+    status: 'Server running',
+    database: db.isPostgres ? 'postgres' : 'sqlite',
+  });
 });
 
 // Admin logs endpoint

@@ -291,13 +291,19 @@ router.get('/applications', authMiddleware, recruiterMiddleware, async (req, res
 
 router.patch('/settings', authMiddleware, recruiterMiddleware, async (req, res) => {
   try {
-    const { company_name, company_url, company_logo } = req.body;
+    const { name, company_name, company_url, company_logo } = req.body;
     await dbRun(
-      `UPDATE users SET company_name = ?, company_url = ?, company_logo = ? WHERE id = ?`,
-      [company_name || null, company_url || null, company_logo || null, req.user.id]
+      `UPDATE users
+       SET name = COALESCE(NULLIF(?, ''), name),
+           company_name = ?,
+           company_url = ?,
+           company_logo = ?,
+           avatar_url = COALESCE(NULLIF(?, ''), avatar_url)
+       WHERE id = ?`,
+      [name || '', company_name || null, company_url || null, company_logo || null, company_logo || '', req.user.id]
     );
     const user = await dbGet(
-      `SELECT id, email, name, role, company_name, company_url, company_logo FROM users WHERE id = ?`,
+      `SELECT id, email, name, role, company_name, company_url, company_logo, avatar_url FROM users WHERE id = ?`,
       [req.user.id]
     );
     res.json({ success: true, user });

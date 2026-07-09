@@ -43,9 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   function preferredTheme() {
-    const saved = localStorage.getItem(themeKey);
-    if (saved === 'dark' || saved === 'light') return saved;
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    return 'light';
   }
 
   function applyTheme(theme) {
@@ -55,7 +53,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const isDark = nextTheme === 'dark';
     [el('theme-toggle'), el('mobile-theme-toggle')].forEach((button) => {
       if (!button) return;
-      button.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
+      const label = isDark ? 'Light mode' : 'Dark mode';
+      button.setAttribute('aria-label', label);
+      button.setAttribute('title', label);
       button.innerHTML = `<i class="fa-regular ${isDark ? 'fa-sun' : 'fa-moon'}"></i>`;
     });
     if (el('settings-theme-toggle')) el('settings-theme-toggle').checked = isDark;
@@ -168,11 +168,18 @@ document.addEventListener('DOMContentLoaded', () => {
     el('forgot-password-link')?.classList.toggle('hidden', isSignup);
     el('auth-submit-btn')?.querySelector('.btn-label')?.replaceChildren(document.createTextNode(isSignup ? 'Create account' : 'Continue'));
     el('auth-back').classList.toggle('hidden', !isSignup);
+    el('auth-name-container')?.classList.toggle('hidden', !isSignup);
+    el('auth-phone-container')?.classList.toggle('hidden', !isSignup);
+    el('auth-confirm-container')?.classList.toggle('hidden', !isSignup);
+    el('auth-name')?.toggleAttribute('required', isSignup);
+    el('auth-phone')?.toggleAttribute('required', isSignup);
+    el('auth-confirm-password')?.toggleAttribute('required', isSignup);
     el('auth-privacy-container').classList.toggle('hidden', !isSignup);
     el('auth-marketing-container').classList.toggle('hidden', !isSignup);
     el('auth-county-container').classList.toggle('hidden', !isSignup);
     el('auth-industry-container').classList.toggle('hidden', !isSignup);
     el('auth-company-container').classList.toggle('hidden', !(isSignup && selectedRole === 'recruiter'));
+    el('auth-company')?.toggleAttribute('required', isSignup && selectedRole === 'recruiter');
 
     toggleModal(authModal, true);
     toggleModal(roleModal, false);
@@ -261,6 +268,7 @@ document.addEventListener('DOMContentLoaded', () => {
     el('profileBtn').classList.toggle('hidden', !loggedIn);
     el('sidebar-login').classList.toggle('hidden', loggedIn);
     el('sidebar-signup').classList.toggle('hidden', loggedIn);
+    el('open-recruiter-menu-btn')?.classList.toggle('hidden', !(loggedIn && state.user.role === 'recruiter'));
     el('home-create-profile-btn')?.classList.toggle('hidden', loggedIn);
 
     renderActivity(applications);
@@ -456,7 +464,10 @@ document.addEventListener('DOMContentLoaded', () => {
           <strong>${escapeHTML((job.salary && job.salary !== 'Not specified') ? job.salary : deadlineLabel(job.deadline))}</strong>
           <span class="${job.deadline ? 'hk-deadline' : ''}">${escapeHTML(deadlineLabel(job.deadline) || relativeTime(job.created_at))}</span>
           <span><i class="fa-solid fa-location-dot"></i> ${escapeHTML(job.location || 'Kenya')}</span>
-          <button type="button" data-job-id="${job.id}">View details</button>
+          <div class="hk-opportunity-actions">
+            <button class="hk-card-view-btn" type="button" data-job-id="${job.id}">View job</button>
+            <button class="hk-card-apply-btn" type="button" data-apply-job-id="${job.id}">Apply</button>
+          </div>
           <button class="hk-save-inline" type="button" aria-label="Save opportunity" data-save-job-id="${job.id}">
             <i class="${state.saved.has(job.id) || state.saved.has(String(job.id)) ? 'fa-solid' : 'fa-regular'} fa-bookmark"></i>
           </button>
@@ -468,6 +479,12 @@ document.addEventListener('DOMContentLoaded', () => {
     container.querySelectorAll('[data-job-id]').forEach((button) => {
       button.addEventListener('click', () => {
         const job = state.dashboard.opportunities.find((item) => String(item.id) === String(button.dataset.jobId));
+        openJobModal(job);
+      });
+    });
+    container.querySelectorAll('[data-apply-job-id]').forEach((button) => {
+      button.addEventListener('click', () => {
+        const job = state.dashboard.opportunities.find((item) => String(item.id) === String(button.dataset.applyJobId));
         openJobModal(job);
       });
     });
@@ -1854,6 +1871,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const mode = form.dataset.mode;
     const email = el('auth-email').value.trim();
     const password = el('auth-password').value;
+    const confirmPassword = el('auth-confirm-password')?.value || '';
 
     if (mode === 'signup' && !selectedRole) {
       showToast('Choose whether you are a recruiter or job seeker.', true);
@@ -1865,6 +1883,11 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    if (mode === 'signup' && password !== confirmPassword) {
+      showToast('Passwords do not match.', true);
+      return;
+    }
+
     setButtonLoading(submitButton, true, mode === 'signup' ? 'Creating account...' : 'Signing in...');
 
     try {
@@ -1873,9 +1896,11 @@ document.addEventListener('DOMContentLoaded', () => {
         ? {
             email,
             password,
-            name: email.split('@')[0],
+            confirm_password: confirmPassword,
+            name: el('auth-name').value.trim(),
+            phone_number: el('auth-phone').value.trim(),
             role: selectedRole,
-            company_name: selectedRole === 'recruiter' ? (el('auth-company')?.value.trim() || 'My Company') : null,
+            company_name: selectedRole === 'recruiter' ? el('auth-company')?.value.trim() : null,
             marketing_optin: el('auth-marketing-optin').checked,
             county: el('auth-county').value.trim(),
             industry: el('auth-industry').value.trim(),
@@ -2209,6 +2234,10 @@ document.addEventListener('DOMContentLoaded', () => {
   el('open-profile-menu-btn')?.addEventListener('click', () => {
     el('account-menu')?.classList.add('hidden');
     if (requireAuth()) toggleModal(profileModal, true);
+  });
+
+  el('open-recruiter-menu-btn')?.addEventListener('click', () => {
+    window.location.href = 'recruiter-dashboard.html';
   });
 
   el('open-premium-menu-btn')?.addEventListener('click', () => {

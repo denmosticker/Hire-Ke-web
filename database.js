@@ -1,10 +1,196 @@
-const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 
-const dbPath = process.env.DB_PATH || process.env.DATABASE_PATH || path.join(__dirname, 'hireke.db');
-console.log('📦 Using SQLite DB at:', dbPath);
-const db = new sqlite3.Database(dbPath);
+function replaceQuestionParams(sql, params = []) {
+  let index = 0;
+  let quote = null;
+  let output = '';
+  for (let i = 0; i < sql.length; i += 1) {
+    const char = sql[i];
+    const next = sql[i + 1];
+    if (quote) {
+      output += char;
+      if (char === quote) {
+        if (next === quote) {
+          output += next;
+          i += 1;
+        } else {
+          quote = null;
+        }
+      }
+      continue;
+    }
+    if (char === "'" || char === '"') {
+      quote = char;
+      output += char;
+      continue;
+    }
+    if (char === '?') {
+      index += 1;
+      output += `$${index}`;
+      continue;
+    }
+    output += char;
+  }
+  return { sql: output, params };
+}
 
+function removeDatetimeWrappers(sql) {
+  let output = '';
+  for (let i = 0; i < sql.length; i += 1) {
+    if (sql.slice(i, i + 9).toLowerCase() !== 'datetime(') {
+      output += sql[i];
+      continue;
+    }
+    let depth = 1;
+    let j = i + 9;
+    let quote = null;
+    let inner = '';
+    for (; j < sql.length; j += 1) {
+      const char = sql[j];
+      const next = sql[j + 1];
+      if (quote) {
+        inner += char;
+        if (char === quote) {
+          if (next === quote) {
+            inner += next;
+            j += 1;
+          } else {
+            quote = null;
+          }
+        }
+        continue;
+      }
+      if (char === "'" || char === '"') {
+        quote = char;
+        inner += char;
+        continue;
+      }
+      if (char === '(') depth += 1;
+      if (char === ')') {
+        depth -= 1;
+        if (depth === 0) break;
+      }
+      inner += char;
+    }
+    const normalized = inner.trim().toLowerCase();
+    if (normalized === "'now'") {
+      output += 'NOW()';
+    } else if (/^'now'\s*,\s*'\+\d+\s+days'$/.test(normalized)) {
+      const days = normalized.match(/\+(\d+)\s+days/)[1];
+      output += `(NOW() + INTERVAL '${days} days')`;
+    } else {
+      output += inner;
+    }
+    i = j;
+  }
+  return output;
+}
+
+function transformPostgresSql(inputSql) {
+  let sql = String(inputSql || '').trim().replace(/;+\s*$/, '');
+  const wasInsertOrIgnore = /INSERT\s+OR\s+IGNORE\s+INTO/i.test(sql);
+  sql = sql.replace(/INTEGER PRIMARY KEY AUTOINCREMENT/gi, 'SERIAL PRIMARY KEY');
+  sql = sql.replace(/\bDATETIME\b/gi, 'TIMESTAMP');
+  sql = sql.replace(/\bREAL\b/gi, 'DOUBLE PRECISION');
+  sql = sql.replace(/INSERT\s+OR\s+IGNORE\s+INTO/gi, 'INSERT INTO');
+  sql = removeDatetimeWrappers(sql);
+  if (/^INSERT\s+INTO\s+/i.test(sql) && !/\bRETURNING\b/i.test(sql)) {
+    if (wasInsertOrIgnore && !/\bON\s+CONFLICT\b/i.test(sql)) {
+      sql += ' ON CONFLICT DO NOTHING';
+    }
+    sql += ' RETURNING *';
+  }
+  return sql;
+}
+
+class PostgresCompatDatabase {
+  constructor(connectionString) {
+    const { Pool } = require('pg');
+    this.pool = new Pool({
+      connectionString,
+      ssl: process.env.PGSSLMODE === 'disable' ? false : { rejectUnauthorized: false },
+    });
+    this.isPostgres = true;
+    this.ready = Promise.resolve();
+  }
+
+  serialize(callback) {
+    callback();
+  }
+
+  run(sql, params = [], callback) {
+    if (typeof params === 'function') {
+      callback = params;
+      params = [];
+    }
+    const task = async () => {
+      const query = replaceQuestionParams(transformPostgresSql(sql), params);
+      const result = await this.pool.query(query.sql, query.params);
+      const first = result.rows?.[0] || {};
+      return {
+        lastID: first.id || first.user_id || null,
+        changes: result.rowCount || 0,
+      };
+    };
+    this.ready = this.ready.then(task, task);
+    this.ready
+      .then((context) => callback?.call(context, null))
+      .catch((error) => {
+        if (error.code === '42701') error.message = 'duplicate column name';
+        callback?.(error);
+      });
+    return this;
+  }
+
+  get(sql, params = [], callback) {
+    if (typeof params === 'function') {
+      callback = params;
+      params = [];
+    }
+    const task = async () => {
+      const query = replaceQuestionParams(transformPostgresSql(sql), params);
+      const result = await this.pool.query(query.sql, query.params);
+      return result.rows[0];
+    };
+    this.ready
+      .then(task)
+      .then((row) => callback?.(null, row))
+      .catch((error) => callback?.(error));
+    return this;
+  }
+
+  all(sql, params = [], callback) {
+    if (typeof params === 'function') {
+      callback = params;
+      params = [];
+    }
+    const task = async () => {
+      const query = replaceQuestionParams(transformPostgresSql(sql), params);
+      const result = await this.pool.query(query.sql, query.params);
+      return result.rows;
+    };
+    this.ready
+      .then(task)
+      .then((rows) => callback?.(null, rows))
+      .catch((error) => callback?.(error));
+    return this;
+  }
+}
+
+
+
+var db;
+var dbPath;
+if (process.env.DATABASE_URL) {
+  console.log('Using Postgres database from DATABASE_URL');
+  db = new PostgresCompatDatabase(process.env.DATABASE_URL);
+} else {
+  const sqlite3 = require('sqlite3').verbose();
+  dbPath = process.env.DB_PATH || process.env.DATABASE_PATH || path.join(__dirname, 'hireke.db');
+  console.log('Using SQLite DB at:', dbPath);
+  db = new sqlite3.Database(dbPath);
+  db.isPostgres = false;
+}
 
 db.serialize(() => {
   // Users table with OTP verification
@@ -19,6 +205,7 @@ db.serialize(() => {
       company_name TEXT,
       company_url TEXT,
       company_logo TEXT,
+      phone_number TEXT,
       verified_at DATETIME,
       email_verified INTEGER DEFAULT 0,
       otp_code TEXT,
@@ -301,6 +488,7 @@ db.serialize(() => {
   addColumn('users', 'username', 'TEXT');
   addColumn('users', 'avatar_url', 'TEXT');
   addColumn('users', 'cover_banner_url', 'TEXT');
+  addColumn('users', 'phone_number', 'TEXT');
   addColumn('users', 'headline', 'TEXT');
   addColumn('users', 'location', 'TEXT');
   addColumn('users', 'about', 'TEXT');

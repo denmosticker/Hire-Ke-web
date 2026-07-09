@@ -536,13 +536,19 @@ router.get('/social/:provider/callback', async (req, res) => {
 // Signup
 router.post('/signup', async (req, res) => {
   try {
-    const { email, password, name, role, company_name, company_url, marketing_optin, county, industry } = req.body;
+    const { email, password, confirm_password, name, phone_number, role, company_name, company_url, marketing_optin, county, industry } = req.body;
 
-    if (!email || !password || !name || !role) {
+    if (!email || !password || !name || !phone_number || !role) {
       return res.status(400).json({ error: 'Missing required fields' });
+    }
+    if (confirm_password && password !== confirm_password) {
+      return res.status(400).json({ error: 'Passwords do not match' });
     }
     if (!['jobseeker', 'recruiter'].includes(role)) {
       return res.status(400).json({ error: 'Invalid signup role' });
+    }
+    if (role === 'recruiter' && !company_name) {
+      return res.status(400).json({ error: 'Company name is required for recruiter accounts' });
     }
 
     // Password complexity check: 6+ chars, 1 uppercase, 1 number, 1 symbol
@@ -554,12 +560,13 @@ router.post('/signup', async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const result = await dbRun(
-      `INSERT INTO users (email, password, name, role, company_name, company_url, status, marketing_optin)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO users (email, password, name, phone_number, role, company_name, company_url, status, marketing_optin)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         email,
         hashedPassword,
         name,
+        phone_number,
         role,
         company_name || null,
         company_url || null,
@@ -672,7 +679,7 @@ router.get('/me', async (req, res) => {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await dbGet(
-      `SELECT id, email, name, role, status, company_name, company_url, company_logo, email_verified FROM users WHERE id = ?`,
+      `SELECT id, email, name, phone_number, role, status, company_name, company_url, company_logo, email_verified FROM users WHERE id = ?`,
       [decoded.id]
     );
 

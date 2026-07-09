@@ -1117,6 +1117,7 @@
           <button class="icon-button" type="button"><i class="fas fa-bell"></i><span>0</span></button>
           <button class="icon-button" type="button"><i class="fas fa-message"></i><span>0</span></button>
           <button id="recruiter-theme-toggle" class="icon-button" type="button" aria-label="Switch to dark mode"><i class="far fa-moon"></i></button>
+          <button id="view-as-jobseeker" class="post-job-btn" type="button"><i class="fas fa-user-check"></i> View as Job Seeker</button>
           <button class="post-job-btn" onclick="showPostJobModal()"><i class="fas fa-plus"></i> Post a Job</button>
         </div>
       </div>
@@ -1416,6 +1417,10 @@
           <div class="card">
             <h3>Account Settings</h3>
             <div class="form-group">
+              <label>Profile Name</label>
+              <input type="text" id="recruiterNameInput" />
+            </div>
+            <div class="form-group">
               <label>Company Name</label>
               <input type="text" id="companyNameInput" />
             </div>
@@ -1424,7 +1429,7 @@
               <input type="url" id="companyWebsite" />
             </div>
             <div class="form-group">
-              <label>Company Logo URL</label>
+              <label>Profile Picture / Company Logo URL</label>
               <input type="url" id="companyLogoUrl" placeholder="https://example.com/logo.png" />
             </div>
             <button class="submit-btn" onclick="saveSettings()">Save Settings</button>
