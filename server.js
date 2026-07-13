@@ -174,9 +174,21 @@ app.get('/profile/:id', (_req, res) => {
 
 // Health check
 app.get('/api/health', (req, res) => {
+  const storageProvider = (process.env.STORAGE_PROVIDER || 'local').toLowerCase();
+  const storageConfigured = storageProvider === 'local'
+    || (storageProvider === 'r2'
+      && Boolean((process.env.R2_ACCOUNT_ID || process.env.R2_ENDPOINT) && process.env.R2_ACCESS_KEY_ID && process.env.R2_SECRET_ACCESS_KEY && process.env.R2_BUCKET && process.env.R2_PUBLIC_URL))
+    || (storageProvider === 's3'
+      && Boolean(process.env.S3_ENDPOINT && process.env.S3_ACCESS_KEY_ID && process.env.S3_SECRET_ACCESS_KEY && process.env.S3_BUCKET && process.env.S3_PUBLIC_URL))
+    || (storageProvider === 'supabase'
+      && Boolean(process.env.SUPABASE_URL && (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY)));
   res.json({
     status: 'Server running',
     database: db.isPostgres ? 'postgres' : 'sqlite',
+    storage: {
+      provider: storageProvider,
+      configured: storageConfigured,
+    },
   });
 });
 
@@ -216,7 +228,8 @@ cron.schedule('0 * * * *', () => {
     // 2. Unfeature jobs from expired/free recruiters
     db.run(
       `UPDATE jobs SET featured = 0 
-       WHERE recruiter_id IN (SELECT recruiter_id FROM subscriptions WHERE active = 0)`,
+       WHERE COALESCE(free_featured_grant, 0) != 1
+         AND recruiter_id IN (SELECT recruiter_id FROM subscriptions WHERE active = 0)`,
       function(err) {
         if (err) console.error('Cron Error (Jobs):', err.message);
       }

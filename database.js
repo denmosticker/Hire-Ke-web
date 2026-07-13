@@ -240,6 +240,7 @@ db.serialize(() => {
       deadline DATETIME,
       status TEXT CHECK(status IN ('pending', 'approved', 'rejected')) DEFAULT 'pending',
       featured INTEGER DEFAULT 0,
+      free_featured_grant INTEGER DEFAULT 0,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (recruiter_id) REFERENCES users(id)
     )
@@ -519,6 +520,7 @@ db.serialize(() => {
   addColumn('jobs', 'application_url', 'TEXT');
   addColumn('jobs', 'application_email', 'TEXT');
   addColumn('jobs', 'application_whatsapp', 'TEXT');
+  addColumn('jobs', 'free_featured_grant', 'INTEGER DEFAULT 0');
   addColumn('jobs', 'category', "TEXT DEFAULT 'Jobs'");
   addColumn('jobs', 'source_url', 'TEXT');
   addColumn('jobs', 'source_name', 'TEXT');

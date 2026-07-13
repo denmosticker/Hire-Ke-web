@@ -472,8 +472,10 @@ router.post('/feature-job/:jobId', authMiddleware, recruiterMiddleware, async (r
       addons = subscription?.addons ? JSON.parse(subscription.addons) : {};
     } catch (_) {}
     const hasFeaturedAllowance = Number(subscription?.featured_jobs || 0) > 0 || addons.featured_job?.active;
+    const isFreeFeaturedGrant = Number(job.free_featured_grant || 0) === 1;
+    const isUnfeaturingFreeGrant = isFreeFeaturedGrant && Number(job.featured || 0) === 1;
 
-    if (!subscription || !hasFeaturedAllowance) {
+    if ((!subscription || !hasFeaturedAllowance) && !isUnfeaturingFreeGrant) {
       return res.status(403).json({ error: 'Featured Job add-on or paid recruiter plan required' });
     }
 

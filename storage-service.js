@@ -96,16 +96,24 @@ function s3SigningKey(secretKey, dateStamp, region, service) {
 }
 
 async function saveS3Object({ bucket, userId, file }) {
-  const endpoint = (process.env.S3_ENDPOINT || '').replace(/\/$/, '');
-  const region = process.env.S3_REGION || 'us-east-1';
-  const accessKey = process.env.S3_ACCESS_KEY_ID;
-  const secretKey = process.env.S3_SECRET_ACCESS_KEY;
-  const actualBucket = process.env.S3_BUCKET || bucket;
+  const provider = (process.env.STORAGE_PROVIDER || 's3').toLowerCase();
+  const r2AccountId = process.env.R2_ACCOUNT_ID || process.env.CLOUDFLARE_ACCOUNT_ID;
+  const r2Endpoint = r2AccountId ? `https://${r2AccountId}.r2.cloudflarestorage.com` : '';
+  const endpoint = (process.env.R2_ENDPOINT || process.env.S3_ENDPOINT || r2Endpoint || '').replace(/\/$/, '');
+  const region = process.env.R2_REGION || process.env.S3_REGION || 'auto';
+  const accessKey = process.env.R2_ACCESS_KEY_ID || process.env.S3_ACCESS_KEY_ID;
+  const secretKey = process.env.R2_SECRET_ACCESS_KEY || process.env.S3_SECRET_ACCESS_KEY;
+  const actualBucket = process.env.R2_BUCKET || process.env.S3_BUCKET || bucket;
   if (!endpoint || !accessKey || !secretKey) {
-    throw new Error('S3_ENDPOINT, S3_ACCESS_KEY_ID, and S3_SECRET_ACCESS_KEY are required for S3 storage.');
+    throw new Error(`${provider.toUpperCase()} storage is not configured. Set R2_ACCOUNT_ID/R2_ENDPOINT, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, and R2_BUCKET.`);
+  }
+  if (provider === 'r2' && !process.env.R2_PUBLIC_URL && !process.env.S3_PUBLIC_URL) {
+    throw new Error('R2_PUBLIC_URL is required so uploaded files can be opened from HireKe.');
   }
 
-  const key = process.env.S3_BUCKET ? makeObjectKey({ bucket, userId, file }) : makeObjectKey({ bucket: '', userId, file }).replace(/^file\//, '');
+  const key = (process.env.R2_BUCKET || process.env.S3_BUCKET)
+    ? makeObjectKey({ bucket, userId, file })
+    : makeObjectKey({ bucket: '', userId, file }).replace(/^file\//, '');
   const payloadHash = sha256(file.buffer);
   const now = new Date();
   const amzDate = now.toISOString().replace(/[:-]|\.\d{3}/g, '');
@@ -136,9 +144,9 @@ async function saveS3Object({ bucket, userId, file }) {
     throw new Error(`S3 upload failed: ${response.status} ${await response.text()}`);
   }
 
-  const publicBase = (process.env.S3_PUBLIC_URL || `${endpoint}/${actualBucket}`).replace(/\/$/, '');
+  const publicBase = (process.env.R2_PUBLIC_URL || process.env.S3_PUBLIC_URL || `${endpoint}/${actualBucket}`).replace(/\/$/, '');
   return {
-    provider: 's3',
+    provider,
     bucket: actualBucket,
     key,
     url: `${publicBase}/${key.split('/').map(encodeURIComponent).join('/')}`,
@@ -160,7 +168,7 @@ async function saveObject({ bucket, userId, file }) {
     return saveSupabaseObject({ bucket, userId, file });
   }
 
-  if (provider === 's3') {
+  if (provider === 's3' || provider === 'r2') {
     return saveS3Object({ bucket, userId, file });
   }
 

@@ -96,13 +96,17 @@ router.post('/', authMiddleware, recruiterMiddleware, async (req, res) => {
     // Check recruiter status for auto-approval
     const recruiter = await dbGet(`SELECT status FROM users WHERE id = ?`, [recruiter_id]);
     const jobStatus = recruiter?.status === 'approved' ? 'approved' : 'pending';
+    const previousJobs = await dbGet(`SELECT COUNT(*) as count FROM jobs WHERE recruiter_id = ?`, [recruiter_id]);
+    const isFirstRecruiterJob = Number(previousJobs?.count || 0) === 0;
+    const freeFeaturedGrant = isFirstRecruiterJob ? 1 : 0;
 
     const result = await dbRun(
       `INSERT INTO jobs (
          recruiter_id, title, location, salary_min, salary_max, description, requirements,
-         job_type, deadline, status, application_method, application_url, application_email, application_whatsapp
+         job_type, deadline, status, featured, free_featured_grant,
+         application_method, application_url, application_email, application_whatsapp
        )
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         recruiter_id,
         title,
@@ -114,6 +118,8 @@ router.post('/', authMiddleware, recruiterMiddleware, async (req, res) => {
         job_type || 'Full-time',
         deadline || null,
         jobStatus,
+        freeFeaturedGrant,
+        freeFeaturedGrant,
         applyConfig.application_method,
         applyConfig.application_url,
         applyConfig.application_email,
@@ -127,8 +133,9 @@ router.post('/', authMiddleware, recruiterMiddleware, async (req, res) => {
       console.error('AI opportunity embedding refresh failed:', error.message);
     }
 
-    const message = jobStatus === 'approved' ? 'Job posted and approved.' : 'Job posted. Awaiting admin approval.';
-    res.json({ id: result.lastID, status: jobStatus, message });
+    const featureMessage = freeFeaturedGrant ? ' Your first job has been featured for free.' : '';
+    const message = `${jobStatus === 'approved' ? 'Job posted and approved.' : 'Job posted. Awaiting admin approval.'}${featureMessage}`;
+    res.json({ id: result.lastID, status: jobStatus, featured: freeFeaturedGrant, freeFeaturedGrant: Boolean(freeFeaturedGrant), message });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
