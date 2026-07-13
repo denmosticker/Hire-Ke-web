@@ -367,7 +367,7 @@ router.get('/saved', authMiddleware, async (req, res) => {
          AND j.status = 'approved'
          AND j.archived_at IS NULL
          AND j.deleted_at IS NULL
-       ORDER BY datetime(so.created_at) DESC`,
+       ORDER BY so.created_at DESC`,
       [req.user.id]
     );
 

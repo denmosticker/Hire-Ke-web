@@ -119,7 +119,7 @@ router.get('/dashboard', authMiddleware, recruiterMiddleware, async (req, res) =
        JOIN jobs j ON a.job_id = j.id
        LEFT JOIN user_verifications uv ON uv.user_id = a.user_id AND uv.status = 'approved'
        WHERE j.recruiter_id = ?
-       ORDER BY COALESCE(uv.priority_rank, 0) DESC, datetime(a.applied_at) DESC
+       ORDER BY COALESCE(uv.priority_rank, 0) DESC, a.applied_at DESC
        LIMIT 5`,
       [recruiterId]
     );
@@ -133,7 +133,7 @@ router.get('/dashboard', authMiddleware, recruiterMiddleware, async (req, res) =
        LEFT JOIN applications a ON a.job_id = j.id
        WHERE j.recruiter_id = ?
        GROUP BY j.id
-       ORDER BY datetime(j.created_at) DESC
+       ORDER BY j.created_at DESC
        LIMIT 4`,
       [recruiterId]
     );
@@ -218,7 +218,7 @@ router.get('/applicants/:jobId', authMiddleware, recruiterMiddleware, async (req
        FROM applications a
        LEFT JOIN user_verifications uv ON uv.user_id = a.user_id AND uv.status = 'approved'
        WHERE a.job_id = ?
-       ORDER BY COALESCE(uv.priority_rank, 0) DESC, datetime(a.applied_at) DESC`,
+       ORDER BY COALESCE(uv.priority_rank, 0) DESC, a.applied_at DESC`,
       [jobId]
     );
 
@@ -280,7 +280,7 @@ router.get('/applications', authMiddleware, recruiterMiddleware, async (req, res
        JOIN jobs j ON a.job_id = j.id
        LEFT JOIN user_verifications uv ON uv.user_id = a.user_id AND uv.status = 'approved'
        WHERE j.recruiter_id = ?
-       ORDER BY datetime(a.applied_at) DESC`,
+       ORDER BY a.applied_at DESC`,
       [req.user.id]
     );
     res.json(rows);
@@ -345,7 +345,7 @@ router.get('/applications/:applicationId', authMiddleware, recruiterMiddleware, 
          FROM recruiter_notes rn
          JOIN users u ON u.id = rn.recruiter_id
          WHERE rn.application_id = ? AND rn.recruiter_id = ?
-         ORDER BY datetime(rn.created_at) DESC`,
+         ORDER BY rn.created_at DESC`,
         [applicationId, recruiterId]
       ),
     ]);

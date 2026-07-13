@@ -84,12 +84,12 @@ router.get('/', authMiddleware, async (req, res) => {
          ELSE c.participant_one_id
        END
        LEFT JOIN messages m ON m.id = (
-         SELECT id FROM messages WHERE conversation_id = c.id ORDER BY datetime(created_at) DESC, id DESC LIMIT 1
+         SELECT id FROM messages WHERE conversation_id = c.id ORDER BY created_at DESC, id DESC LIMIT 1
        )
        LEFT JOIN messages unread ON unread.conversation_id = c.id AND unread.receiver_id = ? AND unread.read_at IS NULL
        WHERE c.participant_one_id = ? OR c.participant_two_id = ? OR ? = 'admin'
        GROUP BY c.id
-       ORDER BY datetime(COALESCE(m.created_at, c.updated_at)) DESC`,
+       ORDER BY COALESCE(m.created_at, c.updated_at) DESC`,
       [req.user.id, req.user.id, req.user.id, req.user.id, req.user.role]
     );
     res.json(rows);
@@ -113,7 +113,7 @@ router.get('/conversations/:id', authMiddleware, async (req, res) => {
        JOIN users s ON s.id = m.sender_id
        JOIN users r ON r.id = m.receiver_id
        WHERE m.conversation_id = ?
-       ORDER BY datetime(m.created_at) ASC, m.id ASC`,
+       ORDER BY m.created_at ASC, m.id ASC`,
       [conversation.id]
     );
     res.json({ conversation, messages });

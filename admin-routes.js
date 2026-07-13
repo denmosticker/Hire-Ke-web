@@ -171,7 +171,7 @@ async function findOpportunityDuplicates(body, excludeId = null) {
     sql += ' AND id != ?';
     params.push(excludeId);
   }
-  sql += ' ORDER BY datetime(created_at) DESC LIMIT 5';
+  sql += ' ORDER BY created_at DESC LIMIT 5';
 
   return (await dbAll(sql, params)).map((row) => ({ ...row, status: apiStatus(row) }));
 }
@@ -686,7 +686,7 @@ router.get('/opportunities/pending', authMiddleware, adminMiddleware, async (_re
          AND j.archived_at IS NULL AND j.deleted_at IS NULL
        ORDER BY
          CASE WHEN j.status = 'pending' THEN 0 WHEN j.status = 'approved' THEN 1 ELSE 2 END,
-         datetime(j.created_at) DESC`,
+         j.created_at DESC`,
       []
     );
     res.json(rows.map((row) => ({
@@ -807,7 +807,7 @@ router.post('/opportunities/:id/archive', authMiddleware, adminMiddleware, async
 
 router.get('/sources', authMiddleware, adminMiddleware, async (_req, res) => {
   try {
-    const sources = await dbAll(`SELECT * FROM sources ORDER BY is_active DESC, datetime(created_at) DESC`, []);
+    const sources = await dbAll(`SELECT * FROM sources ORDER BY is_active DESC, created_at DESC`, []);
     res.json(sources);
   } catch (error) {
     res.status(400).json({ error: error.message });
@@ -922,7 +922,7 @@ router.get('/verification-queue', authMiddleware, adminMiddleware, async (req, r
        WHERE vr.status IN ('submitted', 'pending')
        ORDER BY
          CASE vr.plan_code WHEN 'express' THEN 0 WHEN 'premium_monthly' THEN 1 WHEN 'premium_annual' THEN 2 ELSE 3 END,
-         datetime(vr.submitted_at) ASC`,
+         vr.submitted_at ASC`,
       []
     );
     res.json(rows);
@@ -960,14 +960,15 @@ router.get('/verification-levels', authMiddleware, adminMiddleware, async (_req,
 
 router.get('/verification-renewals', authMiddleware, adminMiddleware, async (_req, res) => {
   try {
+    const renewalCutoff = new Date(Date.now() + 30 * 86400000).toISOString();
     const rows = await dbAll(
       `SELECT uv.*, u.name, u.email
        FROM user_verifications uv
        JOIN users u ON u.id = uv.user_id
        WHERE uv.status IN ('approved', 'expired')
-          AND (datetime(uv.expires_at) <= datetime('now', '+30 days') OR datetime(uv.expires_at) < datetime('now'))
-       ORDER BY datetime(uv.expires_at) ASC`,
-      []
+          AND uv.expires_at <= ?
+       ORDER BY uv.expires_at ASC`,
+      [renewalCutoff]
     );
     res.json(rows);
   } catch (error) {
@@ -1066,7 +1067,7 @@ router.get('/transactions', authMiddleware, adminMiddleware, async (req, res) =>
        FROM payment_transactions pt
        LEFT JOIN payments p ON p.id = pt.payment_id
        LEFT JOIN users u ON u.id = pt.user_id
-       ORDER BY datetime(pt.created_at) DESC
+       ORDER BY pt.created_at DESC
        LIMIT 200`,
       []
     );
@@ -1082,7 +1083,7 @@ router.get('/subscriptions', authMiddleware, adminMiddleware, async (req, res) =
       `SELECT s.*, u.name as recruiter_name, u.email as recruiter_email, u.company_name
        FROM subscriptions s
        JOIN users u ON u.id = s.recruiter_id
-       ORDER BY datetime(COALESCE(s.renewal_date, s.expiry_date, s.created_at)) DESC`,
+       ORDER BY COALESCE(s.renewal_date, s.expiry_date, s.created_at) DESC`,
       []
     );
     res.json(rows);
@@ -1098,7 +1099,7 @@ router.get('/refunds', authMiddleware, adminMiddleware, async (req, res) => {
        FROM payments p
        LEFT JOIN users u ON u.id = COALESCE(p.user_id, p.recruiter_id)
        WHERE p.status IN ('refunded', 'cancelled', 'failed')
-       ORDER BY datetime(p.updated_at) DESC, datetime(p.created_at) DESC`,
+       ORDER BY p.updated_at DESC, p.created_at DESC`,
       []
     );
     res.json(rows);

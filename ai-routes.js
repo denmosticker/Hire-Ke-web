@@ -166,7 +166,7 @@ router.get('/job-seeker/matches', authMiddleware, async (req, res) => {
        FROM jobs j
        JOIN users u ON u.id = j.recruiter_id
        WHERE j.status = 'approved' AND j.archived_at IS NULL AND j.deleted_at IS NULL
-       ORDER BY datetime(j.created_at) DESC
+       ORDER BY j.created_at DESC
        LIMIT 100`
     );
     const matches = [];
@@ -226,7 +226,7 @@ router.get('/recruiter/opportunities/:id/matching-candidates', authMiddleware, r
        LEFT JOIN applications a ON a.user_id = u.id OR a.applicant_email = u.email
        WHERE u.role = 'jobseeker'
          AND (u.status IN ('approved', 'pending') OR u.email_verified = 1)
-       ORDER BY CASE WHEN a.job_id = ? THEN 0 ELSE 1 END, datetime(u.created_at) DESC
+       ORDER BY CASE WHEN a.job_id = ? THEN 0 ELSE 1 END, u.created_at DESC
        LIMIT 100`,
       [req.params.id]
     );
@@ -258,7 +258,7 @@ router.get('/recruiter/opportunities/:id/matching-candidates', authMiddleware, r
 
 router.get('/admin/logs', authMiddleware, adminMiddleware, async (_req, res) => {
   try {
-    const logs = await dbAll(`SELECT * FROM ai_match_logs ORDER BY datetime(created_at) DESC LIMIT 200`);
+    const logs = await dbAll(`SELECT * FROM ai_match_logs ORDER BY created_at DESC LIMIT 200`);
     res.json(logs);
   } catch (error) {
     res.status(400).json({ error: error.message });

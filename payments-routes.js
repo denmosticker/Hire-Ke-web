@@ -162,7 +162,7 @@ router.get('/billing', authMiddleware, async (req, res) => {
   try {
     const subscription = await dbGet(`SELECT * FROM subscriptions WHERE recruiter_id = ?`, [req.user.id]);
     const invoices = await dbAll(
-      `SELECT * FROM invoices WHERE user_id = ? ORDER BY datetime(created_at) DESC LIMIT 20`,
+      `SELECT * FROM invoices WHERE user_id = ? ORDER BY created_at DESC LIMIT 20`,
       [req.user.id]
     );
     const payments = await getPaymentHistory(req.user.id);
@@ -181,7 +181,7 @@ router.get('/verification', authMiddleware, async (req, res) => {
   try {
     const verification = await dbGet(`SELECT * FROM user_verifications WHERE user_id = ?`, [req.user.id]);
     const requests = await dbAll(
-      `SELECT * FROM verification_requests WHERE user_id = ? ORDER BY datetime(submitted_at) DESC`,
+      `SELECT * FROM verification_requests WHERE user_id = ? ORDER BY submitted_at DESC`,
       [req.user.id]
     );
     const latestRequest = requests[0];

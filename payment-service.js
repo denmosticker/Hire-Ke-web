@@ -288,10 +288,11 @@ async function createPaymentIntent({ user, itemCode, phone, discountCode, metada
   const normalizedPhone = normalizePhone(phone);
   if (pricing.amount > 0 && !/^254\d{9}$/.test(normalizedPhone)) throw new Error('Use a valid Kenyan phone number for M-Pesa STK Push');
 
+  const invoiceDueDate = new Date(Date.now() + 86400000).toISOString();
   const invoice = await dbRun(
     `INSERT INTO invoices (user_id, invoice_number, item_type, item_code, description, amount, currency, status, due_date)
-     VALUES (?, ?, ?, ?, ?, ?, 'KES', ?, datetime('now', '+1 day'))`,
-    [user.id, invoiceNumber(), item.itemType, itemCode, item.name, pricing.amount, pricing.amount === 0 ? STATUS.SUCCESS : STATUS.PENDING]
+     VALUES (?, ?, ?, ?, ?, ?, 'KES', ?, ?)`,
+    [user.id, invoiceNumber(), item.itemType, itemCode, item.name, pricing.amount, pricing.amount === 0 ? STATUS.SUCCESS : STATUS.PENDING, invoiceDueDate]
   );
 
   const payment = await dbRun(
@@ -541,7 +542,7 @@ async function getPaymentHistory(userId) {
      FROM payments p
      LEFT JOIN invoices i ON i.id = p.invoice_id
      WHERE p.user_id = ? OR p.recruiter_id = ?
-     ORDER BY datetime(p.created_at) DESC`,
+     ORDER BY p.created_at DESC`,
     [userId, userId]
   );
 }
