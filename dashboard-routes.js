@@ -85,7 +85,7 @@ async function getApprovedJobs() {
      JOIN users u ON j.recruiter_id = u.id
      LEFT JOIN user_verifications uv ON uv.user_id = u.id AND uv.status = 'approved'
      WHERE j.status = 'approved' AND j.archived_at IS NULL AND j.deleted_at IS NULL
-     ORDER BY COALESCE(uv.priority_rank, 0) DESC, j.featured DESC, datetime(j.created_at) DESC`,
+     ORDER BY COALESCE(uv.priority_rank, 0) DESC, j.featured DESC, j.created_at DESC`,
     []
   );
 
@@ -187,14 +187,14 @@ router.get('/me', async (req, res) => {
        JOIN users u ON j.recruiter_id = u.id
        LEFT JOIN user_verifications uv ON uv.user_id = a.user_id AND uv.status = 'approved'
        WHERE a.applicant_email = ?
-       ORDER BY datetime(a.applied_at) DESC`,
+       ORDER BY a.applied_at DESC`,
       [user.email]
     );
 
     const notifications = await dbAll(
       `SELECT id, message, is_read, created_at FROM notifications
        WHERE user_email = ?
-       ORDER BY datetime(created_at) DESC
+       ORDER BY created_at DESC
        LIMIT 10`,
       [user.email]
     );
@@ -205,7 +205,7 @@ router.get('/me', async (req, res) => {
     );
 
     const savedRows = await dbAll(
-      `SELECT job_id FROM saved_opportunities WHERE user_id = ? ORDER BY datetime(created_at) DESC`,
+      `SELECT job_id FROM saved_opportunities WHERE user_id = ? ORDER BY created_at DESC`,
       [user.id]
     );
 

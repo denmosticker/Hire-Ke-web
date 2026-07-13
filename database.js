@@ -123,6 +123,7 @@ class PostgresCompatDatabase {
       callback = params;
       params = [];
     }
+    const isSchemaStatement = /^\s*(CREATE|ALTER)\s+/i.test(String(sql || ''));
     const task = async () => {
       const query = replaceQuestionParams(transformPostgresSql(sql), params);
       const result = await this.pool.query(query.sql, query.params);
@@ -132,11 +133,18 @@ class PostgresCompatDatabase {
         changes: result.rowCount || 0,
       };
     };
-    this.ready = this.ready.then(task, task);
-    this.ready
+    const operation = this.ready.then(task, task).catch((error) => {
+      if (error.code === '42701') error.message = 'duplicate column name';
+      if (isSchemaStatement) {
+        console.error('Postgres schema statement skipped:', error.message);
+        return { lastID: null, changes: 0 };
+      }
+      throw error;
+    });
+    this.ready = operation.catch(() => undefined);
+    operation
       .then((context) => callback?.call(context, null))
       .catch((error) => {
-        if (error.code === '42701') error.message = 'duplicate column name';
         callback?.(error);
       });
     return this;
