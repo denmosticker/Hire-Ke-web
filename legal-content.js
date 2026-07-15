@@ -5,12 +5,9 @@ const LAST_UPDATED = '2026-07-14';
 function contactDetails() {
   const defaultSupportEmail = 'support.hirekenya@gmail.com';
   return {
-    legalEntity: process.env.HIREKE_LEGAL_ENTITY_NAME || '[HIREKE_LEGAL_ENTITY_NAME]',
-    address: process.env.HIREKE_PHYSICAL_ADDRESS || '[HIREKE_PHYSICAL_ADDRESS]',
     supportEmail: process.env.HIREKE_SUPPORT_EMAIL || process.env.SMTP_USER || defaultSupportEmail,
     privacyEmail: process.env.HIREKE_PRIVACY_EMAIL || process.env.HIREKE_SUPPORT_EMAIL || process.env.SMTP_USER || defaultSupportEmail,
     legalEmail: process.env.HIREKE_LEGAL_EMAIL || process.env.HIREKE_SUPPORT_EMAIL || process.env.SMTP_USER || defaultSupportEmail,
-    odpcNumber: process.env.HIREKE_ODPC_REGISTRATION_NUMBER || '[HIREKE_ODPC_REGISTRATION_NUMBER_IF_APPLICABLE]',
   };
 }
 
@@ -24,7 +21,7 @@ function allPolicies() {
   const c = contactDetails();
   return {
     privacy: policy('privacy', 'Privacy Policy', 'How HireKe collects, uses, shares, stores, and protects personal data for job seekers, recruiters, payments, CVs, messaging, and AI-assisted matching.', [
-      { heading: 'Legal Status And Contact', body: `${disclaimer}\n\nHireKe is operated by ${c.legalEntity}. Address: ${c.address}. Privacy contact: ${c.privacyEmail}. Support contact: ${c.supportEmail}. ODPC registration number, if applicable: ${c.odpcNumber}.` },
+      { heading: 'Legal Status And Contact', body: `${disclaimer}\n\nHireKe can be contacted about privacy and support matters by email. Privacy contact: ${c.privacyEmail}. Support contact: ${c.supportEmail}. HireKe does not claim an ODPC registration number or regulatory approval in these documents unless that status is separately confirmed and published.` },
       { heading: 'Information We Collect', body: 'HireKe may collect names, email addresses, phone numbers, account credentials, role, company information, profile photos or logos, CVs and resumes, education, skills, employment history, experience, projects, certifications, languages, location, salary preferences, opportunity interests, applications, messages, recruiter notes, verification documents, payment transaction references, device and browser information, IP addresses, logs, security events, cookies, localStorage preferences, and AI matching data such as embeddings, match scores, reasons, and profile text used for recommendations.' },
       { heading: 'How Information Is Collected', body: 'Information is collected when users create accounts, verify email, complete profiles, upload CVs or documents, post opportunities, apply for opportunities, message other users, make PalPlus/M-Pesa payments, contact support, submit complaints, use AI matching, or browse the website.' },
       { heading: 'Why HireKe Processes Data', body: 'HireKe processes data to provide accounts, authentication, email verification, job seeker profiles, recruiter dashboards, opportunity posting, Easy Apply, external application tracking, messaging, Opportunity Passport features, AI-assisted opportunity recommendations, recruiter candidate matching, verification services, billing, fraud prevention, platform security, support, legal compliance, analytics needed to operate the service, and user-requested communications.' },
@@ -43,7 +40,7 @@ function allPolicies() {
     ]),
     terms: policy('terms', 'Terms of Service', 'Platform rules for job seekers, recruiters, accounts, applications, CVs, messages, payments, AI matching, and acceptable conduct.', [
       { heading: 'Acceptance', body: 'By creating or using a HireKe account, you agree to these Terms and acknowledge the Privacy Policy. If you do not agree, do not use the service.' },
-      { heading: 'Legal Review Note', body: `${disclaimer}\n\nTODO/legal review: HireKe’s business model, especially recruiter matching, verification services, subscription limits, and any commission-after-hire model introduced later, may need separate Kenyan legal review.` },
+      { heading: 'Legal Review Note', body: `${disclaimer}\n\nHireKe’s business model, especially recruiter matching, verification services, subscription limits, and any commission-after-hire model introduced later, may need separate Kenyan legal review.` },
       { heading: 'Accounts And Eligibility', body: 'Users must provide accurate information, keep passwords secure, verify email when required, and use the correct role. Job seeker, recruiter, and admin features have different permissions. Admin tools are for authorised HireKe operators only.' },
       { heading: 'Job Seekers And Content', body: 'Job seekers own their CVs, profile content, photos, education, skills, work history, Opportunity Passport information, messages, and application materials. Users grant HireKe a limited licence to host, process, display, transmit, and analyse that content only to provide the service, applications, security, support, and matching features.' },
       { heading: 'Recruiters And Opportunities', body: 'Recruiters must have authority to act for the organisation they represent, provide accurate company details, post genuine opportunities, and handle candidate data lawfully. Recruiter-specific obligations are in the Recruiter Terms.' },
@@ -122,7 +119,7 @@ function allPolicies() {
       { heading: 'False Complaints', body: 'Knowingly false copyright or IP complaints may lead to account restrictions and responsibility for resulting harm where allowed by law.' },
     ]),
     complaints: policy('complaints', 'Contact, Complaints And Dispute Procedure', 'How users report support, privacy, payments, fake opportunities, harassment, IP, AI, and account appeal issues.', [
-      { heading: 'Contact Channels', body: `General support: ${c.supportEmail}. Privacy requests: ${c.privacyEmail}. Legal/IP complaints: ${c.legalEmail}. Physical address: ${c.address}.` },
+      { heading: 'Contact Channels', body: `General support: ${c.supportEmail}. Privacy requests: ${c.privacyEmail}. Legal/IP complaints: ${c.legalEmail}.` },
       { heading: 'Complaint Categories', body: 'HireKe accepts general support, privacy complaints, data requests, recruiter complaints, payment complaints, fake opportunity reports, fake profile reports, harassment reports, copyright/IP complaints, AI matching complaints, and account appeals.' },
       { heading: 'Review Process', body: 'HireKe may acknowledge, triage, request more information, review logs and account activity, restrict content or accounts, mark the complaint reviewed or resolved, and communicate an outcome where appropriate.' },
       { heading: 'External Rights', body: 'Privacy complaints may also be raised with Kenya’s Office of the Data Protection Commissioner where applicable.' },
