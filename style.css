@@ -970,6 +970,32 @@ footer{
   text-decoration:underline;
 }
 
+.hk-sidebar-legal{
+  border-top:1px solid #d8e2f1;
+  display:flex;
+  flex-wrap:wrap;
+  gap:.45rem .65rem;
+  margin:14px 0 0;
+  padding:14px 4px 0;
+}
+.hk-sidebar-legal strong{
+  color:#64748b;
+  flex:0 0 100%;
+  font-size:.72rem;
+  letter-spacing:.02em;
+  text-transform:uppercase;
+}
+.hk-sidebar-legal a{
+  color:#52637f;
+  font-size:.72rem;
+  line-height:1.2;
+  text-decoration:none;
+}
+.hk-sidebar-legal a:hover{
+  color:#0b56d0;
+  text-decoration:underline;
+}
+
 .legal-body{
   background:#f8fafc;
   color:#102033;
@@ -1729,7 +1755,8 @@ password-toggle:focus{
 .hk-home.sidebar-collapsed .hk-brand small,
 .hk-home.sidebar-collapsed .hk-sidebar-collapse span,
 .hk-home.sidebar-collapsed .hk-nav a span,
-.hk-home.sidebar-collapsed .hk-nav a strong{
+.hk-home.sidebar-collapsed .hk-nav a strong,
+.hk-home.sidebar-collapsed .hk-sidebar-legal{
   opacity:0;
   max-width:0;
   overflow:hidden;
