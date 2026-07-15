@@ -49,6 +49,7 @@ function formatOpportunity(row) {
 async function ensureCandidateEmbedding(userId) {
   const user = await dbGet(`SELECT * FROM users WHERE id = ?`, [userId]);
   if (!user) throw new Error('User not found');
+  if (user.ai_matching_enabled === 0) throw new Error('AI-assisted matching is disabled for this account.');
   const cvText = user.cv_url ? await ai.parseCvFromUrl(user.cv_url) : '';
   const text = ai.buildCandidateProfileText({ ...user, cv_text: cvText });
   if (!text) throw new Error('Add profile details or upload a readable CV before matching.');
@@ -160,6 +161,10 @@ async function calculateCandidateOpportunityMatch(candidateUserId, opportunityId
 router.get('/job-seeker/matches', authMiddleware, async (req, res) => {
   try {
     if (req.user.role === 'recruiter') return res.status(403).json({ error: 'Job seeker account required' });
+    const preference = await dbGet(`SELECT ai_matching_enabled FROM users WHERE id = ?`, [req.user.id]);
+    if (preference?.ai_matching_enabled === 0) {
+      return res.status(403).json({ error: 'AI-assisted matching is disabled in your Privacy & Data settings.', disabled: true });
+    }
     const { user, embedding: candidateEmbedding } = await ensureCandidateEmbedding(req.user.id);
     const jobs = await dbAll(
       `SELECT j.*, COALESCE(j.company_external, u.company_name, u.name) as company_name, u.name as recruiter_name, u.email as recruiter_email
@@ -198,6 +203,10 @@ router.get('/job-seeker/matches', authMiddleware, async (req, res) => {
 
 router.get('/job-seeker/opportunities/:id/match', authMiddleware, async (req, res) => {
   try {
+    const preference = await dbGet(`SELECT ai_matching_enabled FROM users WHERE id = ?`, [req.user.id]);
+    if (preference?.ai_matching_enabled === 0) {
+      return res.status(403).json({ error: 'AI-assisted matching is disabled in your Privacy & Data settings.', disabled: true });
+    }
     const result = await calculateCandidateOpportunityMatch(req.user.id, req.params.id, req.user.id);
     res.json({
       opportunityId: result.opportunity.id,
@@ -225,10 +234,12 @@ router.get('/recruiter/opportunities/:id/matching-candidates', authMiddleware, r
        FROM users u
        LEFT JOIN applications a ON a.user_id = u.id OR a.applicant_email = u.email
        WHERE u.role = 'jobseeker'
+         AND COALESCE(u.ai_matching_enabled, 1) = 1
          AND (u.status IN ('approved', 'pending') OR u.email_verified = 1)
+         AND (COALESCE(u.recruiter_profile_visible, 0) = 1 OR a.job_id = ?)
        ORDER BY CASE WHEN a.job_id = ? THEN 0 ELSE 1 END, u.created_at DESC
        LIMIT 100`,
-      [req.params.id]
+      [req.params.id, req.params.id]
     );
     const ranked = [];
     for (const candidate of candidates) {

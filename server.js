@@ -104,6 +104,8 @@ const dashboardRoutes = require('./dashboard-routes');
 const networkRoutes = require('./network-routes');
 const messagesRoutes = require('./messages-routes');
 const aiRoutes = require('./ai-routes');
+const { router: legalRoutes } = require('./legal-routes');
+const { storageStatus } = require('./storage-service');
 const { authMiddleware, adminMiddleware } = require('./auth-middleware');
 const { importExternalJobs } = require('./job-scraper');
 
@@ -129,6 +131,12 @@ const emailRateLimiter = createRateLimiter({
   message: 'Too many contact requests. Please try again later.',
   key: (req) => String(req.body?.email || '').toLowerCase(),
 });
+const legalRateLimiter = createRateLimiter({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  message: 'Too many legal or complaint requests. Please try again later.',
+  key: (req) => String(req.body?.email || req.user?.email || '').toLowerCase(),
+});
 
 
 
@@ -137,6 +145,8 @@ app.use('/api/auth', authRateLimiter);
 app.use('/api/admin', adminRateLimiter);
 app.use('/api/payments', paymentRateLimiter);
 app.use('/api/email', emailRateLimiter);
+app.use('/api/legal/complaints', legalRateLimiter);
+app.use('/api/legal/data-deletion-requests', legalRateLimiter);
 app.use('/api/auth', authRoutes);
 app.use('/api/jobs', jobsRoutes);
 app.use('/api/recruiter', recruiterRoutes);
@@ -147,6 +157,7 @@ app.use('/api/profile', profileRoutes);
 app.use('/api/network', networkRoutes);
 app.use('/api/messages', messagesRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/legal', legalRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/opportunities', dashboardRoutes);
 app.use('/api/categories', dashboardRoutes);
@@ -157,6 +168,23 @@ app.get('/admin/opportunities/import', (_req, res) => {
 
 app.get(['/contact', '/contact-me'], (_req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+app.get([
+  '/privacy',
+  '/terms',
+  '/recruiter-terms',
+  '/payments-refunds',
+  '/cookies',
+  '/candidate-data-consent',
+  '/ai-transparency',
+  '/acceptable-use',
+  '/opportunity-posting-policy',
+  '/data-deletion',
+  '/intellectual-property',
+  '/complaints',
+], (_req, res) => {
+  res.sendFile(path.join(__dirname, 'legal.html'));
 });
 
 app.get('/profile/me/:section?', (_req, res) => {
@@ -174,21 +202,11 @@ app.get('/profile/:id', (_req, res) => {
 
 // Health check
 app.get('/api/health', (req, res) => {
-  const storageProvider = (process.env.STORAGE_PROVIDER || 'local').toLowerCase();
-  const storageConfigured = storageProvider === 'local'
-    || (storageProvider === 'r2'
-      && Boolean((process.env.R2_ACCOUNT_ID || process.env.R2_ENDPOINT) && process.env.R2_ACCESS_KEY_ID && process.env.R2_SECRET_ACCESS_KEY && process.env.R2_BUCKET && process.env.R2_PUBLIC_URL))
-    || (storageProvider === 's3'
-      && Boolean(process.env.S3_ENDPOINT && process.env.S3_ACCESS_KEY_ID && process.env.S3_SECRET_ACCESS_KEY && process.env.S3_BUCKET && process.env.S3_PUBLIC_URL))
-    || (storageProvider === 'supabase'
-      && Boolean(process.env.SUPABASE_URL && (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY)));
+  const storage = storageStatus();
   res.json({
     status: 'Server running',
     database: db.isPostgres ? 'postgres' : 'sqlite',
-    storage: {
-      provider: storageProvider,
-      configured: storageConfigured,
-    },
+    storage,
   });
 });
 

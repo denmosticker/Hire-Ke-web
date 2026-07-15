@@ -945,6 +945,209 @@ footer{
   margin-top:60px;
 }
 
+.hk-legal-footer{
+  background:#0f172a;
+  color:#cbd5e1;
+  padding:2rem 6%;
+}
+.hk-legal-footer h2{
+  color:#fff;
+  font-size:1rem;
+  margin:0 0 .8rem;
+}
+.hk-legal-footer nav{
+  display:flex;
+  flex-wrap:wrap;
+  gap:.65rem 1rem;
+}
+.hk-legal-footer a{
+  color:#dbeafe;
+  text-decoration:none;
+  font-size:.92rem;
+}
+.hk-legal-footer a:hover{
+  color:#fff;
+  text-decoration:underline;
+}
+
+.legal-body{
+  background:#f8fafc;
+  color:#102033;
+  min-height:100vh;
+}
+.legal-header,
+.legal-footer{
+  display:flex;
+  justify-content:space-between;
+  gap:1rem;
+  align-items:center;
+  padding:1rem min(5vw,4rem);
+  background:#fff;
+  border-bottom:1px solid #e2e8f0;
+}
+.legal-footer{
+  border-top:1px solid #e2e8f0;
+  border-bottom:0;
+  color:#64748b;
+}
+.legal-brand{
+  display:inline-flex;
+  align-items:center;
+  gap:.6rem;
+  color:#0f172a;
+  font-weight:800;
+  text-decoration:none;
+}
+.legal-brand img{
+  width:36px;
+  height:36px;
+  object-fit:contain;
+}
+.legal-header nav{
+  display:flex;
+  gap:1rem;
+  flex-wrap:wrap;
+}
+.legal-header a{
+  color:#2563eb;
+  text-decoration:none;
+  font-weight:700;
+}
+.legal-shell{
+  width:min(1160px,calc(100% - 2rem));
+  margin:2rem auto;
+  display:grid;
+  grid-template-columns:260px minmax(0,1fr);
+  gap:2rem;
+}
+.legal-sidebar{
+  align-self:start;
+  position:sticky;
+  top:1rem;
+}
+.legal-sidebar h2{
+  font-size:.9rem;
+  text-transform:uppercase;
+  color:#64748b;
+  margin:0 0 .8rem;
+}
+#legal-policy-links,
+.legal-toc{
+  display:grid;
+  gap:.35rem;
+}
+#legal-policy-links a,
+.legal-toc a{
+  color:#334155;
+  text-decoration:none;
+  padding:.55rem .65rem;
+  border-radius:6px;
+}
+#legal-policy-links a.active,
+#legal-policy-links a:hover,
+.legal-toc a:hover{
+  background:#e0f2fe;
+  color:#075985;
+}
+.legal-article{
+  background:#fff;
+  border:1px solid #e2e8f0;
+  border-radius:8px;
+  padding:clamp(1.25rem,3vw,2.5rem);
+  line-height:1.72;
+}
+.legal-article h1{
+  margin:0 0 .75rem;
+  font-size:clamp(2rem,5vw,3.2rem);
+  color:#0f172a;
+}
+.legal-summary{
+  color:#475569;
+  font-size:1.08rem;
+}
+.legal-meta{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:.75rem;
+  margin:1.5rem 0;
+}
+.legal-meta div{
+  border-top:1px solid #e2e8f0;
+  padding-top:.7rem;
+}
+.legal-meta dt{
+  color:#64748b;
+  font-size:.82rem;
+  text-transform:uppercase;
+  font-weight:800;
+}
+.legal-meta dd{
+  margin:.2rem 0 0;
+  color:#0f172a;
+  font-weight:700;
+}
+.legal-toc{
+  border-top:1px solid #e2e8f0;
+  border-bottom:1px solid #e2e8f0;
+  padding:1rem 0;
+  margin:1.5rem 0;
+}
+.legal-article section{
+  scroll-margin-top:1rem;
+  margin-top:1.5rem;
+}
+.legal-article h2{
+  color:#0f172a;
+  font-size:1.35rem;
+  margin-bottom:.4rem;
+}
+.legal-article p{
+  color:#334155;
+}
+.legal-complaint-form{
+  margin-top:2rem;
+  border-top:1px solid #e2e8f0;
+  padding-top:1.5rem;
+}
+.legal-complaint-form select{
+  width:100%;
+  padding:.85rem;
+  border:1px solid #cbd5e1;
+  border-radius:8px;
+  background:#fff;
+}
+.hk-consent-stack,
+.hk-privacy-controls{
+  display:grid;
+  gap:.75rem;
+}
+.auth-policy-note{
+  margin:.15rem 0 .25rem;
+  color:#475569;
+  font-size:.9rem;
+  line-height:1.45;
+}
+.auth-policy-note a{
+  color:#0b56d0;
+  font-weight:800;
+}
+.hk-policy-links{
+  display:flex;
+  flex-wrap:wrap;
+  gap:.6rem .9rem;
+  margin-top:1rem;
+}
+.hk-policy-links a{
+  color:#2563eb;
+  font-weight:700;
+}
+.hk-settings-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:.75rem;
+  margin-top:1rem;
+}
+
 .footer-grid{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
@@ -967,6 +1170,22 @@ footer{
 }
 
 @media(max-width:720px){
+  .legal-header,
+  .legal-footer{
+    align-items:flex-start;
+    flex-direction:column;
+  }
+  .legal-shell{
+    grid-template-columns:1fr;
+    margin:1rem auto;
+  }
+  .legal-sidebar{
+    position:static;
+  }
+  .legal-meta{
+    grid-template-columns:1fr;
+  }
+
   header{
     flex-direction:column;
     align-items:flex-start;

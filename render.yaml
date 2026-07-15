@@ -21,6 +21,12 @@ services:
         value: "true"
       - key: STORAGE_PROVIDER
         value: r2
+      - key: HIREKE_SUPPORT_EMAIL
+        value: support.hirekenya@gmail.com
+      - key: HIREKE_PRIVACY_EMAIL
+        value: support.hirekenya@gmail.com
+      - key: HIREKE_LEGAL_EMAIL
+        value: support.hirekenya@gmail.com
       - key: R2_ACCOUNT_ID
         sync: false
       - key: R2_ACCESS_KEY_ID

@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:3000/api';
+const API_BASE_URL = `${window.location.origin}/api`;
 
 async function submitPayment() {
     const phone = document.getElementById('mpesaPhone').value.trim();
@@ -6,6 +6,10 @@ async function submitPayment() {
 
     if (!phone) {
         alert('Please enter the M-Pesa phone number for the STK Push.');
+        return;
+    }
+    if (!document.getElementById('billingAck')?.checked) {
+        alert('Please acknowledge the selected product, amount, and payment policy before payment.');
         return;
     }
 

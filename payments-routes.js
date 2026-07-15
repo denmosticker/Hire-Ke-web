@@ -3,7 +3,7 @@ const multer = require('multer');
 const path = require('path');
 const db = require('./database');
 const { authMiddleware } = require('./auth-middleware');
-const { saveObject } = require('./storage-service');
+const { saveObject, assertStorageReady } = require('./storage-service');
 const {
   RECRUITER_PLANS,
   ADD_ONS,
@@ -206,6 +206,7 @@ router.post('/verification/submit', authMiddleware, upload.array('documents', 8)
     const planCode = req.body.planCode || 'standard';
     const item = VERIFICATION_PLANS[planCode];
     if (!item) return res.status(400).json({ error: 'Unknown verification plan' });
+    if ((req.files || []).length) assertStorageReady();
 
     const request = await dbRun(
       `INSERT INTO verification_requests (user_id, plan_code, level_requested, status, amount, notes)

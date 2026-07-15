@@ -312,6 +312,7 @@
           <div class="input-group"><label for="verification-phone">M-Pesa Phone</label><input id="verification-phone" type="tel" placeholder="07XX XXX XXX" /></div>
           <div class="input-group"><label for="verification-notes">Notes</label><textarea id="verification-notes" placeholder="Add any context for the verification team"></textarea></div>
           <div class="input-group"><label for="verification-documents">Supporting Documents</label><input id="verification-documents" type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" /></div>
+          <label class="toggle-row"><input id="verification-billing-ack" type="checkbox" />I acknowledge the selected product, amount, and <a href="/payments-refunds" target="_blank" rel="noopener">Payment, Billing and Refund Policy</a>.</label>
           <button type="submit" class="primary-btn">Start Verification</button>
           <p id="verification-upgrade-status" class="hk-form-status"></p>
         </form>
@@ -348,7 +349,21 @@
               </div>
             </section>
             <section class="hidden" data-settings-panel="security"><h3>Security</h3><p>Password reset and sign-in protection use your verified email. Coming Soon: device history and two-factor authentication.</p><button type="button" id="settings-password-reset" class="secondary-btn">Send Password Reset</button></section>
-            <section class="hidden" data-settings-panel="privacy"><h3>Privacy</h3><p>Your public profile shows your headline, about, education, and experience. Private contact details remain hidden.</p></section>
+            <section class="hidden" data-settings-panel="privacy">
+              <h3>Privacy</h3>
+              <p>Control who can view your professional profile and whether optional AI matching can use your professional information.</p>
+              <div class="hk-privacy-controls">
+                <label class="toggle-row"><input id="settings-recruiter-visible" type="checkbox" />Allow registered recruiters to view my public professional profile.</label>
+                <label class="toggle-row"><input id="settings-ai-matching" type="checkbox" />Use my professional information to provide AI-assisted opportunity recommendations and match estimates.</label>
+                <label class="toggle-row"><input id="settings-cv-consent" type="checkbox" />I consent to HireKe processing my CV and professional information to provide profile, application and opportunity-matching services.</label>
+              </div>
+              <div class="hk-settings-actions">
+                <button type="button" id="settings-save-privacy" class="primary-btn">Save Privacy Choices</button>
+                <button type="button" id="settings-delete-cv" class="secondary-btn">Delete CV</button>
+              </div>
+              <p id="settings-privacy-status" class="hk-form-status"></p>
+              <div class="hk-policy-links"><a href="/privacy">Privacy Policy</a><a href="/candidate-data-consent">CV Consent Notice</a><a href="/ai-transparency">AI Transparency</a></div>
+            </section>
             <section class="hidden" data-settings-panel="opportunities"><h3>Opportunity Preferences</h3><p>Use profile skills, location, and career goals to tune recommendations.</p><button type="button" class="secondary-btn" data-profile-cta>Edit Preferences</button></section>
             <section class="hidden" data-settings-panel="notifications"><h3>Notifications</h3><div id="settings-notifications-list" class="hk-alert-list"></div></section>
             <section class="hidden" data-settings-panel="documents"><h3>Documents</h3><div id="settings-documents-list" class="hk-document-list"></div></section>
@@ -363,9 +378,18 @@
                 <input id="settings-theme-toggle" type="checkbox" />
               </label>
             </section>
-            <section class="hidden" data-settings-panel="connected"><h3>Connected Accounts</h3><p>Google, GitHub, and Facebook sign-in options are shown on the login screen. Coming Soon: account linking management.</p></section>
-            <section class="hidden" data-settings-panel="data"><h3>Data & Privacy</h3><p>Your profile, documents, applications, and connections are stored for your HireKe account. Coming Soon: export and deletion request tools.</p></section>
-            <section class="hidden" data-settings-panel="billing"><h3>Billing</h3><p>Billing and payment records are managed through verification and recruiter payment flows.</p></section>
+            <section class="hidden" data-settings-panel="connected"><h3>Connected Accounts</h3><p>Social sign-in options are currently disabled. They can be added later after legal and OAuth configuration review.</p></section>
+            <section class="hidden" data-settings-panel="data">
+              <h3>Data & Privacy</h3>
+              <p>Your profile, documents, applications, connections, and payment references are stored for your HireKe account. You can request a copy or ask for account closure review.</p>
+              <div class="hk-settings-actions">
+                <button type="button" id="settings-download-data" class="secondary-btn">Download My Data</button>
+                <button type="button" id="settings-request-deletion" class="secondary-btn">Request Account Deletion</button>
+              </div>
+              <p id="settings-data-status" class="hk-form-status"></p>
+              <div class="hk-policy-links"><a href="/data-deletion">Deletion Policy</a><a href="/complaints">Contact & Complaints</a></div>
+            </section>
+            <section class="hidden" data-settings-panel="billing"><h3>Billing</h3><p>Billing and payment records are managed through verification and recruiter payment flows. Review the payment terms before starting paid actions.</p><div class="hk-policy-links"><a href="/payments-refunds">Payment, Billing & Refund Policy</a></div></section>
           </div>
         </div>
       </article>
@@ -385,6 +409,24 @@
       </article>
     </section>
   </main>
+
+  <footer class="hk-legal-footer">
+    <h2>Legal & Policies</h2>
+    <nav aria-label="Legal and policy links">
+      <a href="/privacy">Privacy</a>
+      <a href="/terms">Terms</a>
+      <a href="/recruiter-terms">Recruiter Terms</a>
+      <a href="/payments-refunds">Payments & Refunds</a>
+      <a href="/cookies">Cookies</a>
+      <a href="/candidate-data-consent">CV Consent</a>
+      <a href="/ai-transparency">AI Transparency</a>
+      <a href="/acceptable-use">Acceptable Use</a>
+      <a href="/opportunity-posting-policy">Opportunity Posting Policy</a>
+      <a href="/data-deletion">Data & Account Deletion</a>
+      <a href="/intellectual-property">Intellectual Property</a>
+      <a href="/complaints">Contact & Complaints</a>
+    </nav>
+  </footer>
 
   <div id="role-modal" class="modal auth-experience hidden">
     <div class="modal-panel role-auth-panel">
@@ -421,7 +463,13 @@
           <div class="password-wrap"><input id="auth-confirm-password" type="password" placeholder="Repeat your password" /></div>
         </div>
         <button type="button" id="forgot-password-link" class="forgot-password-link">Forgot password?</button>
-        <div id="auth-privacy-container" class="toggle-row hidden"><input id="auth-privacy-agree" type="checkbox" /><label for="auth-privacy-agree">I agree to the Data Protection & Privacy Policy.</label></div>
+        <div id="auth-privacy-container" class="hk-consent-stack hidden">
+          <p class="auth-policy-note">Before creating an account, you can read HireKe's <a href="/privacy" target="_blank" rel="noopener">Data Protection & Privacy Policy</a>, <a href="/terms" target="_blank" rel="noopener">Terms</a>, and <a href="/candidate-data-consent" target="_blank" rel="noopener">CV Consent Notice</a>.</p>
+          <label class="toggle-row"><input id="auth-terms-agree" type="checkbox" />I agree to the <a href="/terms" target="_blank" rel="noopener">HireKe Terms of Service</a> and acknowledge the <a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a>.</label>
+          <label class="toggle-row"><input id="auth-cv-consent" type="checkbox" />I consent to HireKe processing my CV and professional information to provide profile, application and opportunity-matching services.</label>
+          <label class="toggle-row"><input id="auth-recruiter-visible" type="checkbox" />Allow registered recruiters to view my public professional profile.</label>
+          <label class="toggle-row"><input id="auth-ai-matching" type="checkbox" checked />Use my professional information to provide AI-assisted opportunity recommendations and match estimates.</label>
+        </div>
         <div id="auth-marketing-container" class="toggle-row hidden"><input id="auth-marketing-optin" type="checkbox" /><label for="auth-marketing-optin">Send me career tips and opportunity updates.</label></div>
         <div id="auth-county-container" class="input-group hidden"><label for="auth-county">County</label><input id="auth-county" type="text" placeholder="Nairobi" /></div>
         <div id="auth-industry-container" class="input-group hidden"><label for="auth-industry">Industry</label><input id="auth-industry" type="text" placeholder="ICT, finance, construction..." /></div>

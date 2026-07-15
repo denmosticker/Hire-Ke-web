@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
     messages: [],
     aiMatches: [],
     aiMatchesLoaded: false,
+    consentPreferences: null,
     publicProfile: null,
     pendingPhotoFile: null,
     currentProfileSection: 'about',
@@ -508,6 +509,10 @@ document.addEventListener('DOMContentLoaded', () => {
       container.innerHTML = empty('Loading your AI matches...');
       return;
     }
+    if (state.consentPreferences?.aiMatchingEnabled === false) {
+      container.innerHTML = empty('AI matching is turned off in Privacy settings.');
+      return;
+    }
     if (!state.aiMatches.length) {
       container.innerHTML = empty('No AI matches yet. Add skills, location, experience, or upload a readable CV.');
       return;
@@ -545,6 +550,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!state.user || state.user.role === 'recruiter') {
       state.aiMatches = [];
       state.aiMatchesLoaded = Boolean(state.user);
+      renderAiMatches();
+      return;
+    }
+    if (state.consentPreferences?.aiMatchingEnabled === false) {
+      state.aiMatches = [];
+      state.aiMatchesLoaded = true;
       renderAiMatches();
       return;
     }
@@ -954,6 +965,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const appsList = el('settings-applications-list');
     if (appsList) appsList.innerHTML = el('applications-list')?.innerHTML || empty('No applications submitted yet.');
     setText('settings-verification-status', el('verification-current-status')?.textContent || 'Not verified');
+    const prefs = state.consentPreferences || {};
+    if (el('settings-recruiter-visible')) el('settings-recruiter-visible').checked = Boolean(prefs.recruiterProfileVisible);
+    if (el('settings-ai-matching')) el('settings-ai-matching').checked = prefs.aiMatchingEnabled !== false;
+    if (el('settings-cv-consent')) el('settings-cv-consent').checked = Boolean(prefs.cvProcessingConsent || state.profile?.cv_processing_consent === 1);
     renderNetwork();
   }
 
@@ -1170,7 +1185,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!match) return;
     const userId = match[1];
     try {
-      const data = await fetchJson(`${API_BASE_URL}/profile/${userId}`);
+      const data = await fetchJson(`${API_BASE_URL}/profile/${userId}`, { headers: authHeaders() });
       state.publicProfile = data.data;
       renderPublicProfile();
     } catch (error) {
@@ -1783,6 +1798,7 @@ document.addEventListener('DOMContentLoaded', () => {
       state.networkRequests = { incoming: [], outgoing: [] };
       state.connections = [];
       state.messages = [];
+      state.consentPreferences = null;
       updatePersonalUI();
       renderAlerts();
       renderAllAlerts();
@@ -1800,6 +1816,7 @@ document.addEventListener('DOMContentLoaded', () => {
         state.saved = new Set(state.personal.savedOpportunityIds);
       }
       await loadEditableProfile();
+      await loadConsentPreferences();
       await loadMessages();
       await loadSavedOpportunities();
       await loadAiMatches();
@@ -1817,6 +1834,7 @@ document.addEventListener('DOMContentLoaded', () => {
       state.savedOpportunities = [];
       state.aiMatches = [];
       state.aiMatchesLoaded = false;
+      state.consentPreferences = null;
     }
 
     updatePersonalUI();
@@ -1847,8 +1865,25 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  async function loadConsentPreferences() {
+    if (!state.user) return;
+    try {
+      const data = await fetchJson(`${API_BASE_URL}/legal/consents/me`, { headers: authHeaders() });
+      state.consentPreferences = data.preferences || null;
+    } catch (_) {
+      state.consentPreferences = null;
+    }
+  }
+
+  function hasCvConsent() {
+    return state.consentPreferences?.cvProcessingConsent || state.profile?.cv_processing_consent === 1;
+  }
+
   async function uploadCvFile(file) {
     if (!state.user || !file) return;
+    if (!hasCvConsent()) {
+      throw new Error('Please enable CV processing consent in Privacy settings before uploading a CV.');
+    }
     const formData = new FormData();
     const profile = state.profile || {};
     formData.append('name', profile.name || state.user.name || '');
@@ -1858,10 +1893,92 @@ document.addEventListener('DOMContentLoaded', () => {
     formData.append('skills', profile.skills || '');
     formData.append('certifications', profile.certifications || '');
     formData.append('career_goals', profile.career_goals || '');
+    formData.append('cv_processing_consent', 'true');
     formData.append('cv', file);
     await fetchJson(`${API_BASE_URL}/profile/me`, { method: 'PATCH', headers: authHeaders(), body: formData });
     await loadEditableProfile();
     await loadPersonalDashboard();
+  }
+
+  async function savePrivacyChoices() {
+    if (!requireAuth()) return;
+    const status = el('settings-privacy-status');
+    try {
+      const data = await fetchJson(`${API_BASE_URL}/legal/consents/me`, {
+        method: 'PUT',
+        headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          recruiterProfileVisible: el('settings-recruiter-visible')?.checked,
+          aiMatchingEnabled: el('settings-ai-matching')?.checked,
+          cvProcessingConsent: el('settings-cv-consent')?.checked,
+        }),
+      });
+      state.consentPreferences = data.preferences;
+      if (status) status.textContent = 'Privacy choices saved.';
+      showToast('Privacy choices saved.');
+      if (state.consentPreferences?.aiMatchingEnabled === false) {
+        state.aiMatches = [];
+        state.aiMatchesLoaded = false;
+        renderAiMatches();
+      }
+    } catch (error) {
+      if (status) status.textContent = error.message;
+      showToast(error.message || 'Could not save privacy choices.', true);
+    }
+  }
+
+  async function deleteCurrentCv() {
+    if (!requireAuth()) return;
+    if (!window.confirm('Delete the active CV from your HireKe profile?')) return;
+    const status = el('settings-privacy-status');
+    try {
+      await fetchJson(`${API_BASE_URL}/profile/me/cv`, { method: 'DELETE', headers: authHeaders() });
+      await loadEditableProfile();
+      renderPersonalProfile();
+      renderSettings();
+      if (status) status.textContent = 'Active CV deleted from your profile.';
+      showToast('Active CV deleted from your profile.');
+    } catch (error) {
+      if (status) status.textContent = error.message;
+      showToast(error.message || 'Could not delete CV.', true);
+    }
+  }
+
+  async function requestAccountDeletion() {
+    if (!requireAuth()) return;
+    if (!window.confirm('Submit an account deletion request for compliance review?')) return;
+    const status = el('settings-data-status');
+    try {
+      const data = await fetchJson(`${API_BASE_URL}/legal/data-deletion-requests`, {
+        method: 'POST',
+        headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ requestType: 'account_closure', details: 'Requested from Privacy & Data settings.' }),
+      });
+      if (status) status.textContent = `Deletion request submitted. Reference: ${data.requestId}`;
+      showToast('Deletion request submitted.');
+    } catch (error) {
+      if (status) status.textContent = error.message;
+      showToast(error.message || 'Could not submit deletion request.', true);
+    }
+  }
+
+  async function downloadMyData() {
+    if (!requireAuth()) return;
+    const status = el('settings-data-status');
+    try {
+      const data = await fetchJson(`${API_BASE_URL}/legal/data-export/me`, { headers: authHeaders() });
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'hireke-data-export.json';
+      link.click();
+      URL.revokeObjectURL(url);
+      if (status) status.textContent = 'Data export downloaded.';
+    } catch (error) {
+      if (status) status.textContent = error.message;
+      showToast(error.message || 'Could not download your data.', true);
+    }
   }
 
   async function handleAuthSubmit(event) {
@@ -1878,8 +1995,8 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    if (mode === 'signup' && !el('auth-privacy-agree').checked) {
-      showToast('Please agree to the privacy policy to continue.', true);
+    if (mode === 'signup' && !el('auth-terms-agree').checked) {
+      showToast('Please agree to the Terms of Service and acknowledge the Privacy Policy to continue.', true);
       return;
     }
 
@@ -1901,6 +2018,10 @@ document.addEventListener('DOMContentLoaded', () => {
             phone_number: el('auth-phone').value.trim(),
             role: selectedRole,
             company_name: selectedRole === 'recruiter' ? el('auth-company')?.value.trim() : null,
+            terms_accepted: el('auth-terms-agree').checked,
+            cv_processing_consent: el('auth-cv-consent').checked,
+            recruiter_profile_visible: el('auth-recruiter-visible').checked,
+            ai_matching_enabled: el('auth-ai-matching').checked,
             marketing_optin: el('auth-marketing-optin').checked,
             county: el('auth-county').value.trim(),
             industry: el('auth-industry').value.trim(),
@@ -2303,7 +2424,14 @@ document.addEventListener('DOMContentLoaded', () => {
     formData.append('certifications', el('profile-certifications').value.trim());
     formData.append('career_goals', el('profile-career-goals').value.trim());
     const cvFile = el('profile-cv').files?.[0];
-    if (cvFile) formData.append('cv', cvFile);
+    if (cvFile) {
+      if (!hasCvConsent()) {
+        showToast('Please enable CV processing consent in Privacy settings before uploading a CV.', true);
+        return;
+      }
+      formData.append('cv_processing_consent', 'true');
+      formData.append('cv', cvFile);
+    }
 
     try {
       const data = await fetchJson(`${API_BASE_URL}/profile/me`, {
@@ -2444,6 +2572,10 @@ document.addEventListener('DOMContentLoaded', () => {
       el('verification-phone').focus();
       return;
     }
+    if (planCode !== 'standard' && !el('verification-billing-ack')?.checked) {
+      showToast('Please acknowledge the selected product, amount, and payment policy before payment.', true);
+      return;
+    }
     if (status) status.textContent = 'Submitting verification request...';
 
     const formData = new FormData();
@@ -2510,6 +2642,10 @@ document.addEventListener('DOMContentLoaded', () => {
   el('theme-toggle')?.addEventListener('click', toggleTheme);
   el('mobile-theme-toggle')?.addEventListener('click', toggleTheme);
   el('settings-theme-toggle')?.addEventListener('change', (event) => applyTheme(event.target.checked ? 'dark' : 'light'));
+  el('settings-save-privacy')?.addEventListener('click', savePrivacyChoices);
+  el('settings-delete-cv')?.addEventListener('click', deleteCurrentCv);
+  el('settings-request-deletion')?.addEventListener('click', requestAccountDeletion);
+  el('settings-download-data')?.addEventListener('click', downloadMyData);
   el('refresh-ai-matches')?.addEventListener('click', loadAiMatches);
   syncResponsiveDefaults();
   updatePersonalUI();

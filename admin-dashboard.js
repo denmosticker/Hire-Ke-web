@@ -126,6 +126,8 @@ window.viewUserProfile = viewUserProfile;
 window.resetUserPassword = resetUserPassword;
 window.changeAdminEmail = changeAdminEmail;
 window.showAdminsOverview = showAdminsOverview;
+window.markComplaintReviewed = markComplaintReviewed;
+window.markDeletionReviewed = markDeletionReviewed;
 
 
 
@@ -154,6 +156,72 @@ function createAdminTable(rows, columns) {
   return `<table class="data-table">${headerRow}${bodyRows}</table>`;
 }
 
+async function adminJson(path, options = {}) {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    ...options,
+    headers: {
+      ...(options.headers || {}),
+      Authorization: `Bearer ${getToken()}`,
+      ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+    },
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.error || 'Admin request failed');
+  return data;
+}
+
+function renderComplianceTable(containerId, rows, columns) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.innerHTML = createAdminTable(rows, columns);
+}
+
+async function loadCompliance() {
+  ['policyVersionsContainer', 'consentStatsContainer', 'complaintsContainer', 'deletionRequestsContainer'].forEach((id) => setContainerLoading(id, 3));
+  try {
+    const [versions, stats, complaints, deletionRequests] = await Promise.all([
+      adminJson('/legal/admin/policy-versions'),
+      adminJson('/legal/admin/consent-stats'),
+      adminJson('/legal/admin/complaints'),
+      adminJson('/legal/admin/deletion-requests'),
+    ]);
+    renderComplianceTable('policyVersionsContainer', versions, ['slug', 'version', 'title', 'effective_date', 'last_updated']);
+    renderComplianceTable('consentStatsContainer', stats, ['consent_type', 'accepted', 'count']);
+    renderComplianceTable('complaintsContainer', complaints.map((item) => ({
+      id: item.id,
+      category: escapeHTML(item.category),
+      email: escapeHTML(item.email),
+      subject: escapeHTML(item.subject),
+      status: escapeHTML(item.status),
+      created_at: escapeHTML(item.created_at),
+      actions: `<button class="btn btn-secondary" onclick="markComplaintReviewed(${item.id})">Reviewed</button>`,
+    })), ['id', 'category', 'email', 'subject', 'status', 'created_at', 'actions']);
+    renderComplianceTable('deletionRequestsContainer', deletionRequests.map((item) => ({
+      id: item.id,
+      user: escapeHTML(item.email || item.user_id),
+      request_type: escapeHTML(item.request_type),
+      status: escapeHTML(item.status),
+      created_at: escapeHTML(item.created_at),
+      actions: `<button class="btn btn-secondary" onclick="markDeletionReviewed(${item.id})">Reviewed</button>`,
+    })), ['id', 'user', 'request_type', 'status', 'created_at', 'actions']);
+  } catch (error) {
+    ['policyVersionsContainer', 'consentStatsContainer', 'complaintsContainer', 'deletionRequestsContainer'].forEach((id) => {
+      const container = document.getElementById(id);
+      if (container) container.innerHTML = `<p class="placeholder-text">${escapeHTML(error.message)}</p>`;
+    });
+  }
+}
+
+async function markComplaintReviewed(id) {
+  await adminJson(`/legal/admin/complaints/${id}`, { method: 'PATCH', body: JSON.stringify({ status: 'reviewed', resolutionNote: 'Marked reviewed in admin dashboard.' }) });
+  loadCompliance();
+}
+
+async function markDeletionReviewed(id) {
+  await adminJson(`/legal/admin/deletion-requests/${id}`, { method: 'PATCH', body: JSON.stringify({ status: 'reviewed', resolutionNote: 'Marked reviewed in admin dashboard.' }) });
+  loadCompliance();
+}
+
 function setPageHeading(page) {
   const pageTitle = document.getElementById('currentPageTitle');
   const pageSubtitle = document.getElementById('currentPageSubtitle');
@@ -168,6 +236,7 @@ function setPageHeading(page) {
     reports: ['Reports', 'Send daily reports and export platform summaries.'],
     verification: ['Verification', 'Approve or reject recruiter and payment verification requests.'],
     messages: ['Messages', 'Review recent platform notifications.'],
+    compliance: ['Legal & Compliance', 'Review policy versions, complaints, deletion requests, and consent statistics.'],
     logs: ['System Logs', 'Monitor database health and live server activity.'],
     settings: ['Settings', 'Manage admin access and platform service checks.']
   };
@@ -259,6 +328,9 @@ function navigateAdminPage(page) {
   }
   if (page === 'messages') {
     loadAdminMessages();
+  }
+  if (page === 'compliance') {
+    loadCompliance();
   }
   if (page === 'logs') {
     checkServerStatus();

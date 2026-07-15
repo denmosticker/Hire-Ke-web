@@ -7,6 +7,7 @@ const dns = require('dns');
 const router = express.Router();
 const { sendContactToBrevo, sendTransactionalEmail } = require('./brevoService'); // Import Brevo service
 const db = require('./database');
+const { CONSENT_TYPES, POLICY_VERSION } = require('./legal-content');
 const SMTP_TIMEOUT_MS = Number(process.env.SMTP_TIMEOUT_MS || 5000);
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -144,6 +145,14 @@ function buildAuthPayload(user) {
       company_name: user.company_name,
     },
   };
+}
+
+async function recordConsent(userId, consentType, accepted, sourceContext = 'signup') {
+  await dbRun(
+    `INSERT INTO user_consents (user_id, consent_type, accepted, policy_version, source_context, updated_at)
+     VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+    [userId, consentType, accepted ? 1 : 0, POLICY_VERSION, sourceContext]
+  );
 }
 
 const socialProviders = {
@@ -536,10 +545,29 @@ router.get('/social/:provider/callback', async (req, res) => {
 // Signup
 router.post('/signup', async (req, res) => {
   try {
-    const { email, password, confirm_password, name, phone_number, role, company_name, company_url, marketing_optin, county, industry } = req.body;
+    const {
+      email,
+      password,
+      confirm_password,
+      name,
+      phone_number,
+      role,
+      company_name,
+      company_url,
+      marketing_optin,
+      county,
+      industry,
+      terms_accepted,
+      cv_processing_consent,
+      recruiter_profile_visible,
+      ai_matching_enabled,
+    } = req.body;
 
     if (!email || !password || !name || !phone_number || !role) {
       return res.status(400).json({ error: 'Missing required fields' });
+    }
+    if (terms_accepted !== true && terms_accepted !== 1 && terms_accepted !== 'true') {
+      return res.status(400).json({ error: 'You must agree to the Terms of Service and acknowledge the Privacy Policy to create an account.' });
     }
     if (confirm_password && password !== confirm_password) {
       return res.status(400).json({ error: 'Passwords do not match' });
@@ -558,10 +586,17 @@ router.post('/signup', async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
+    const recruiterVisible = recruiter_profile_visible === true || recruiter_profile_visible === 1 || recruiter_profile_visible === 'true';
+    const aiEnabled = ai_matching_enabled === false || ai_matching_enabled === 0 || ai_matching_enabled === 'false' ? 0 : 1;
+    const cvConsent = cv_processing_consent === true || cv_processing_consent === 1 || cv_processing_consent === 'true';
 
     const result = await dbRun(
-      `INSERT INTO users (email, password, name, phone_number, role, company_name, company_url, status, marketing_optin)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO users (
+         email, password, name, phone_number, role, company_name, company_url, status, marketing_optin,
+         recruiter_profile_visible, ai_matching_enabled, cv_processing_consent,
+         terms_policy_version, privacy_policy_version, terms_accepted_at, privacy_acknowledged_at
+       )
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
       [
         email,
         hashedPassword,
@@ -572,8 +607,19 @@ router.post('/signup', async (req, res) => {
         company_url || null,
         role === 'recruiter' ? 'pending' : 'approved',
         marketing_optin ? 1 : 0,
+        recruiterVisible ? 1 : 0,
+        aiEnabled,
+        cvConsent ? 1 : 0,
+        POLICY_VERSION,
+        POLICY_VERSION,
       ]
     );
+
+    await recordConsent(result.lastID, CONSENT_TYPES.terms, true, 'signup');
+    await recordConsent(result.lastID, CONSENT_TYPES.privacy, true, 'signup');
+    await recordConsent(result.lastID, CONSENT_TYPES.cv, cvConsent, 'signup');
+    await recordConsent(result.lastID, CONSENT_TYPES.recruiterVisibility, recruiterVisible, 'signup');
+    await recordConsent(result.lastID, CONSENT_TYPES.ai, Boolean(aiEnabled), 'signup');
     
     // If user opted into marketing, send to Brevo (fire and forget)
     if (marketing_optin) {

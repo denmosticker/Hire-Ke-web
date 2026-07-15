@@ -1,4 +1,5 @@
 const path = require('path');
+const { listPolicies } = require('./legal-content');
 
 function replaceQuestionParams(sql, params = []) {
   let index = 0;
@@ -514,6 +515,13 @@ db.serialize(() => {
   addColumn('users', 'profile_completion', 'INTEGER DEFAULT 0');
   addColumn('users', 'verification_level', "TEXT DEFAULT 'none'");
   addColumn('users', 'verification_badge', 'TEXT');
+  addColumn('users', 'recruiter_profile_visible', 'INTEGER DEFAULT 0');
+  addColumn('users', 'ai_matching_enabled', 'INTEGER DEFAULT 1');
+  addColumn('users', 'cv_processing_consent', 'INTEGER DEFAULT 0');
+  addColumn('users', 'terms_policy_version', 'TEXT');
+  addColumn('users', 'privacy_policy_version', 'TEXT');
+  addColumn('users', 'terms_accepted_at', 'DATETIME');
+  addColumn('users', 'privacy_acknowledged_at', 'DATETIME');
 
   // Application method fields for every opportunity/job.
   addColumn('jobs', 'application_method', "TEXT DEFAULT 'easy_apply'");
@@ -775,6 +783,80 @@ db.serialize(() => {
     )
   `);
   db.run(`CREATE INDEX IF NOT EXISTS idx_user_files_user_type ON user_files(user_id, file_type)`);
+  addColumn('user_files', 'deleted_at', 'DATETIME');
+  addColumn('user_files', 'deletion_status', 'TEXT');
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS policy_versions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      slug TEXT NOT NULL,
+      version TEXT NOT NULL,
+      title TEXT,
+      effective_date DATETIME,
+      last_updated DATETIME,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(slug, version)
+    )
+  `);
+  db.run(`
+    CREATE TABLE IF NOT EXISTS user_consents (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      consent_type TEXT NOT NULL,
+      accepted INTEGER NOT NULL DEFAULT 0,
+      policy_version TEXT,
+      source_context TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id)
+    )
+  `);
+  db.run(`
+    CREATE TABLE IF NOT EXISTS data_deletion_requests (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      request_type TEXT DEFAULT 'account_closure',
+      status TEXT DEFAULT 'submitted',
+      details TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      reviewed_by INTEGER,
+      reviewed_at DATETIME,
+      resolution_note TEXT,
+      FOREIGN KEY (user_id) REFERENCES users(id),
+      FOREIGN KEY (reviewed_by) REFERENCES users(id)
+    )
+  `);
+  db.run(`
+    CREATE TABLE IF NOT EXISTS complaint_reports (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER,
+      category TEXT DEFAULT 'general',
+      name TEXT,
+      email TEXT NOT NULL,
+      subject TEXT NOT NULL,
+      message TEXT NOT NULL,
+      related_url TEXT,
+      status TEXT DEFAULT 'submitted',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      reviewed_by INTEGER,
+      reviewed_at DATETIME,
+      resolution_note TEXT,
+      FOREIGN KEY (user_id) REFERENCES users(id),
+      FOREIGN KEY (reviewed_by) REFERENCES users(id)
+    )
+  `);
+  db.run(`CREATE INDEX IF NOT EXISTS idx_user_consents_user_type ON user_consents(user_id, consent_type, created_at)`);
+  db.run(`CREATE INDEX IF NOT EXISTS idx_deletion_requests_status ON data_deletion_requests(status, created_at)`);
+  db.run(`CREATE INDEX IF NOT EXISTS idx_complaint_reports_status ON complaint_reports(status, created_at)`);
+  for (const item of listPolicies()) {
+    db.run(
+      `INSERT OR IGNORE INTO policy_versions (slug, version, title, effective_date, last_updated)
+       VALUES (?, ?, ?, ?, ?)`,
+      [item.slug, item.version, item.title, item.effectiveDate, item.lastUpdated]
+    );
+  }
 
   db.run(`
     CREATE TABLE IF NOT EXISTS profile_education (

@@ -528,6 +528,8 @@ async function saveSettings() {
 async function upgradeWithMpesa(itemCode) {
   const phone = (document.getElementById('billingPhone')?.value || document.getElementById('upgradePhone')?.value || '').trim();
   if (!phone) return alert('Enter the M-Pesa phone number that should receive the STK Push.');
+  const billingAck = document.getElementById('billingTermsAck');
+  if (billingAck && !billingAck.checked) return alert('Please acknowledge the selected product, amount, and payment policy before payment.');
 
   try {
     const response = await fetch(`${API_BASE_URL}/payments/stk-push`, {

@@ -2,10 +2,15 @@ const crypto = require('crypto');
 const fs = require('fs/promises');
 const path = require('path');
 
-const MODEL_NAME = 'Xenova/all-MiniLM-L6-v2';
+const MODEL_NAME = 'keyword-matcher-v1';
 const EMBEDDING_DIMENSIONS = 384;
-
-let extractorPromise = null;
+const KEYWORD_WEIGHT_LIMIT = 140;
+const STOPWORDS = new Set([
+  'the', 'and', 'for', 'with', 'that', 'this', 'from', 'you', 'your', 'our', 'are', 'was', 'were', 'will', 'can',
+  'has', 'have', 'had', 'not', 'but', 'all', 'any', 'job', 'role', 'work', 'team', 'company', 'candidate', 'applicant',
+  'opportunity', 'responsibilities', 'requirements', 'required', 'preferred', 'experience', 'skills', 'skill',
+  'years', 'year', 'month', 'months', 'kenya', 'hireke', 'about', 'using', 'use', 'must', 'able', 'good', 'great',
+]);
 
 function cleanText(text) {
   return String(text || '')
@@ -16,26 +21,58 @@ function cleanText(text) {
 }
 
 function textHash(text) {
-  return crypto.createHash('sha256').update(cleanText(text)).digest('hex');
+  return crypto.createHash('sha256').update(`${MODEL_NAME}:${cleanText(text)}`).digest('hex');
 }
 
-async function getExtractor() {
-  if (!extractorPromise) {
-    extractorPromise = import('@xenova/transformers').then(({ pipeline }) =>
-      pipeline('feature-extraction', MODEL_NAME)
-    );
+function normalizeKeyword(word) {
+  const cleaned = String(word || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9+#.]/g, '')
+  if (cleaned.length <= 4) return cleaned;
+  return cleaned.replace(/(ing|ers|ies|ied|ed|s)$/i, (suffix) => {
+    if (suffix === 'ies' || suffix === 'ied') return 'y';
+    return '';
+  });
+}
+
+function keywordHash(keyword) {
+  const digest = crypto.createHash('sha256').update(keyword).digest();
+  return digest.readUInt32BE(0) % EMBEDDING_DIMENSIONS;
+}
+
+function extractKeywords(text, limit = KEYWORD_WEIGHT_LIMIT) {
+  const cleaned = cleanText(text).toLowerCase();
+  if (!cleaned) return [];
+  const phrases = [];
+  const phraseMatches = cleaned.match(/[a-z0-9+#.]+(?:\s+[a-z0-9+#.]+){1,2}/g) || [];
+  for (const phrase of phraseMatches) {
+    const words = phrase.split(/\s+/).map(normalizeKeyword).filter((word) => word.length > 2 && !STOPWORDS.has(word));
+    if (words.length >= 2) phrases.push(words.join(' '));
   }
-  return extractorPromise;
+  const words = cleaned
+    .split(/[^a-z0-9+#.]+/i)
+    .map(normalizeKeyword)
+    .filter((word) => word.length > 2 && !STOPWORDS.has(word) && !/^\d+$/.test(word));
+  const counts = new Map();
+  for (const word of words) counts.set(word, (counts.get(word) || 0) + 1);
+  for (const phrase of phrases.slice(0, 60)) counts.set(phrase, (counts.get(phrase) || 0) + 1.4);
+  return [...counts.entries()]
+    .sort((a, b) => b[1] - a[1] || b[0].length - a[0].length)
+    .slice(0, limit)
+    .map(([keyword, weight]) => ({ keyword, weight }));
 }
 
 async function getEmbedding(text) {
   const cleaned = cleanText(text);
   if (!cleaned) return null;
-  const extractor = await getExtractor();
-  const output = await extractor(cleaned, { pooling: 'mean', normalize: true });
-  const vector = Array.from(output.data || []);
-  if (vector.length !== EMBEDDING_DIMENSIONS) {
-    throw new Error(`Unexpected embedding size ${vector.length}; expected ${EMBEDDING_DIMENSIONS}`);
+  const vector = Array(EMBEDDING_DIMENSIONS).fill(0);
+  for (const item of extractKeywords(cleaned)) {
+    vector[keywordHash(item.keyword)] += Number(item.weight || 1);
+  }
+  const magnitude = Math.sqrt(vector.reduce((sum, value) => sum + (value * value), 0));
+  if (!magnitude) return vector;
+  for (let i = 0; i < vector.length; i += 1) {
+    vector[i] = Number((vector[i] / magnitude).toFixed(6));
   }
   return vector;
 }
@@ -139,17 +176,20 @@ function hasRemoteCompatibility(candidate = {}, opportunity = {}) {
 }
 
 function skillsOverlap(candidate = {}, opportunity = {}) {
-  const candidateSkills = parseList(candidate.skills).map((item) => item.toLowerCase());
+  const candidateSkills = parseList(candidate.skills).map(normalizeKeyword).filter(Boolean);
   const requirementText = parseList(opportunity.requirements).join(' ').toLowerCase();
   const opportunityText = `${opportunity.title || ''} ${opportunity.description || ''} ${requirementText}`.toLowerCase();
-  if (!candidateSkills.length) return { score: 0.35, matched: [], missing: parseList(opportunity.requirements).slice(0, 5) };
-  const matched = candidateSkills.filter((skill) => opportunityText.includes(skill));
-  const requirementWords = [...new Set(requirementText.split(/[^a-z0-9+#.]+/).filter((word) => word.length > 2))];
+  const opportunityKeywords = extractKeywords(opportunityText, 80).map((item) => item.keyword);
+  const candidateKeywords = extractKeywords(buildCandidateProfileText(candidate), 100).map((item) => item.keyword);
+  if (!candidateSkills.length && !candidateKeywords.length) return { score: 0.35, matched: [], missing: parseList(opportunity.requirements).slice(0, 5) };
+  const candidateSet = new Set([...candidateSkills, ...candidateKeywords]);
+  const matched = [...candidateSet].filter((skill) => opportunityText.includes(skill) || opportunityKeywords.some((keyword) => keyword.includes(skill) || skill.includes(keyword)));
+  const requirementWords = [...new Set([...requirementText.split(/[^a-z0-9+#.]+/), ...opportunityKeywords].map(normalizeKeyword).filter((word) => word.length > 2 && !STOPWORDS.has(word)))];
   const missing = requirementWords
-    .filter((word) => !candidateSkills.some((skill) => skill.includes(word) || word.includes(skill)))
+    .filter((word) => ![...candidateSet].some((skill) => skill.includes(word) || word.includes(skill)))
     .slice(0, 6);
   return {
-    score: Math.min(1, matched.length / Math.max(3, candidateSkills.length)),
+    score: Math.min(1, matched.length / Math.max(4, Math.min(12, requirementWords.length || candidateSet.size))),
     matched,
     missing,
   };
@@ -172,17 +212,18 @@ function availabilityDeadlineFit(_candidate = {}, opportunity = {}) {
 }
 
 function scoreMatch(candidate, opportunity, candidateEmbedding, opportunityEmbedding) {
-  const semanticRaw = cosineSimilarity(candidateEmbedding, opportunityEmbedding);
-  const semantic = Math.max(0, Math.min(1, (semanticRaw + 1) / 2));
+  const keywordRaw = cosineSimilarity(candidateEmbedding, opportunityEmbedding);
+  const keyword = Math.max(0, Math.min(1, keywordRaw));
   const skills = skillsOverlap(candidate, opportunity);
   const location = hasRemoteCompatibility(candidate, opportunity);
   const fit = experienceEducationFit(candidate, opportunity);
   const availability = availabilityDeadlineFit(candidate, opportunity);
-  const score = Math.round((semantic * 55) + (skills.score * 20) + (location * 10) + (fit * 10) + (availability * 5));
+  const score = Math.round((keyword * 45) + (skills.score * 30) + (location * 10) + (fit * 10) + (availability * 5));
   return {
     score: Math.max(0, Math.min(100, score)),
     breakdown: {
-      semantic: Math.round(semantic * 100),
+      semantic: Math.round(keyword * 100),
+      keywords: Math.round(keyword * 100),
       skills: Math.round(skills.score * 100),
       location: Math.round(location * 100),
       experienceEducation: Math.round(fit * 100),
@@ -195,7 +236,7 @@ function scoreMatch(candidate, opportunity, candidateEmbedding, opportunityEmbed
 
 function explainMatch(candidate, opportunity, scoreBreakdown = {}) {
   const reasons = [];
-  if (scoreBreakdown.breakdown?.semantic >= 70) reasons.push('Your profile is semantically close to this opportunity.');
+  if (scoreBreakdown.breakdown?.keywords >= 55 || scoreBreakdown.breakdown?.semantic >= 55) reasons.push('Important keywords in your profile overlap with this opportunity.');
   if (scoreBreakdown.matchedSkills?.length) reasons.push(`Skill match: ${scoreBreakdown.matchedSkills.slice(0, 4).join(', ')}.`);
   if (hasRemoteCompatibility(candidate, opportunity) >= 0.9) reasons.push('The location or remote setup looks compatible.');
   if (experienceEducationFit(candidate, opportunity) >= 0.75) reasons.push('Your education or experience level appears aligned.');
@@ -244,6 +285,7 @@ module.exports = {
   textHash,
   getEmbedding,
   cosineSimilarity,
+  extractKeywords,
   parseList,
   buildCandidateProfileText,
   buildOpportunityText,

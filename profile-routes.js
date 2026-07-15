@@ -3,10 +3,12 @@ const express = require('express');
 const db = require('./database');
 const multer = require('multer');
 const path = require('path');
+const jwt = require('jsonwebtoken');
 const { authMiddleware } = require('./auth-middleware');
-const { saveObject } = require('./storage-service');
+const { saveObject, deleteObject, assertStorageReady } = require('./storage-service');
 const aiRoutes = require('./ai-routes');
 const aiMatchService = require('./services/aiMatchService');
+const { CONSENT_TYPES, POLICY_VERSION } = require('./legal-content');
 
 const router = express.Router();
 
@@ -76,6 +78,28 @@ function normalizeYear(value) {
   return year;
 }
 
+function boolValue(value) {
+  return value === true || value === 1 || value === '1' || value === 'true' || value === 'on';
+}
+
+function optionalUser(req) {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return null;
+  try {
+    return jwt.verify(token, process.env.JWT_SECRET);
+  } catch (_) {
+    return null;
+  }
+}
+
+async function recordConsent(userId, consentType, accepted, sourceContext = 'profile') {
+  await dbRun(
+    `INSERT INTO user_consents (user_id, consent_type, accepted, policy_version, source_context, updated_at)
+     VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+    [userId, consentType, accepted ? 1 : 0, POLICY_VERSION, sourceContext]
+  );
+}
+
 function calculateProfileCompletion(profile) {
   const fields = [
     profile.name,
@@ -134,10 +158,12 @@ async function getExperience(userId) {
 // GET /api/profile/:id – public profile data (basic fields)
 router.get('/:id', (req, res) => {
   const userId = req.params.id;
+  const viewer = optionalUser(req);
   db.get(
-    `SELECT u.id, u.email, u.name as fullName, u.username, u.avatar_url as avatarUrl,
+    `SELECT u.id, u.name as fullName, u.username, u.avatar_url as avatarUrl,
             u.cover_banner_url as coverBannerUrl, u.headline, u.location, u.about,
             u.profile_completion as profileCompletion, u.created_at as createdAt,
+            u.recruiter_profile_visible,
             uv.level as verificationLevel, uv.badge_label as verificationBadge,
             uv.status as verificationStatus, uv.expires_at as verificationExpiresAt
      FROM users u
@@ -147,9 +173,13 @@ router.get('/:id', (req, res) => {
     (err, row) => {
       if (err) return res.status(500).json({ error: err.message });
       if (!row) return res.status(404).json({ error: 'User not found' });
+      if (row.recruiter_profile_visible !== 1 && Number(viewer?.id) !== Number(userId) && viewer?.role !== 'admin') {
+        return res.status(403).json({ error: 'This professional profile is private unless the candidate applies or enables recruiter visibility.' });
+      }
       Promise.all([getEducation(userId), getExperience(userId)])
         .then(([education, experience]) => {
-          res.json({ data: { ...row, educationEntries: education, experienceEntries: experience } });
+          const { recruiter_profile_visible, ...safeRow } = row;
+          res.json({ data: { ...safeRow, recruiterProfileVisible: recruiter_profile_visible === 1, educationEntries: education, experienceEntries: experience } });
         })
         .catch((error) => res.status(500).json({ error: error.message }));
     }
@@ -161,7 +191,8 @@ router.get('/me/edit', authMiddleware, async (req, res) => {
   try {
     const row = await dbGet(
       `SELECT id, email, name, username, avatar_url, cover_banner_url, headline, location, about,
-              skills, education, experience, certifications, career_goals, cv_url, profile_completion
+              skills, education, experience, certifications, career_goals, cv_url, profile_completion,
+              recruiter_profile_visible, ai_matching_enabled, cv_processing_consent
        FROM users WHERE id = ?`,
       [req.user.id]
     );
@@ -175,12 +206,21 @@ router.get('/me/edit', authMiddleware, async (req, res) => {
 // PATCH /api/profile/me - save job seeker profile details and CV URL
 router.patch('/me', authMiddleware, upload.single('cv'), async (req, res) => {
   try {
-    const existing = await dbGet(`SELECT cv_url FROM users WHERE id = ?`, [req.user.id]);
+    const existing = await dbGet(`SELECT cv_url, cv_processing_consent FROM users WHERE id = ?`, [req.user.id]);
     if (!existing) return res.status(404).json({ error: 'User not found' });
 
     let cvUrl = existing.cv_url;
     let cvText = '';
     if (req.file) {
+      assertStorageReady();
+      const consentAccepted = existing.cv_processing_consent === 1 || boolValue(req.body.cv_processing_consent);
+      if (!consentAccepted) {
+        return res.status(400).json({ error: 'Please consent to CV processing before uploading a CV.' });
+      }
+      if (boolValue(req.body.cv_processing_consent) && existing.cv_processing_consent !== 1) {
+        await dbRun(`UPDATE users SET cv_processing_consent = 1 WHERE id = ?`, [req.user.id]);
+        await recordConsent(req.user.id, CONSENT_TYPES.cv, true, 'cv_upload');
+      }
       cvText = await aiMatchService.parseCvBuffer(req.file);
       if (!cvText) return res.status(400).json({ error: 'Could not read text from that CV. Please upload a readable PDF, DOCX, or TXT file.' });
       const stored = await saveObject({ bucket: 'documents', userId: req.user.id, file: req.file });
@@ -244,6 +284,37 @@ router.patch('/me', authMiddleware, upload.single('cv'), async (req, res) => {
       return res.status(400).json({ error: err.message });
     }
     res.status(500).json({ error: err.message });
+  }
+});
+
+router.delete('/me/cv', authMiddleware, async (req, res) => {
+  try {
+    const existing = await dbGet(`SELECT cv_url FROM users WHERE id = ?`, [req.user.id]);
+    if (!existing) return res.status(404).json({ error: 'User not found' });
+    const latestCvFile = await dbGet(
+      `SELECT * FROM user_files WHERE user_id = ? AND file_type = 'cv' ORDER BY created_at DESC, id DESC LIMIT 1`,
+      [req.user.id]
+    );
+    let storageDeleted = false;
+    if (latestCvFile) {
+      try {
+        storageDeleted = await deleteObject(latestCvFile);
+      } catch (error) {
+        console.error('CV storage delete failed:', error.message);
+      }
+    }
+    await dbRun(`UPDATE users SET cv_url = NULL, ai_embedding = NULL, ai_profile_hash = NULL, ai_profile_text = NULL, ai_embedding_updated_at = NULL WHERE id = ?`, [req.user.id]);
+    if (latestCvFile) {
+      await dbRun(`UPDATE user_files SET deleted_at = CURRENT_TIMESTAMP, deletion_status = ? WHERE id = ?`, [storageDeleted ? 'deleted' : 'detached', latestCvFile.id]);
+    }
+    await dbRun(
+      `INSERT INTO data_deletion_requests (user_id, request_type, status, details, updated_at)
+       VALUES (?, 'cv_deletion', 'completed', ?, CURRENT_TIMESTAMP)`,
+      [req.user.id, existing.cv_url ? `Active CV removed from profile. Storage deleted: ${storageDeleted ? 'yes' : 'not confirmed'}.` : 'No active CV was attached.']
+    );
+    res.json({ success: true, message: 'Your active CV has been removed from your profile.' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 });
 
@@ -419,6 +490,7 @@ router.patch('/me/photo', authMiddleware, upload.single('avatar'), async (req, r
     if (!existing) return res.status(404).json({ error: 'User not found' });
     if (!req.file) return res.status(400).json({ error: 'Profile photo is required' });
 
+    assertStorageReady();
     const stored = await saveObject({ bucket: 'profile-pictures', userId: req.user.id, file: req.file });
     await recordUserFile(req.user.id, 'profile_picture', stored);
     await dbRun(`UPDATE users SET avatar_url = ? WHERE id = ?`, [stored.url, req.user.id]);
@@ -458,6 +530,7 @@ router.patch('/:id/banner', authMiddleware, upload.single('banner'), async (req,
     if (!req.file) {
       return res.status(400).json({ error: 'Banner file is required' });
     }
+    assertStorageReady();
     const stored = await saveObject({ bucket: 'profile-banners', userId, file: req.file });
     await recordUserFile(userId, 'profile_banner', stored);
     await dbRun(`UPDATE users SET cover_banner_url = ? WHERE id = ?`, [stored.url, userId]);

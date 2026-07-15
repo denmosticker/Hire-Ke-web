@@ -632,6 +632,7 @@
         <li><a href="#" class="menu-link" data-page="reports"><i class="fa-regular fa-file-lines"></i>Reports</a></li>
         <li><a href="#" class="menu-link" data-page="verification"><i class="fa-regular fa-circle-check"></i>Verification<span id="verificationBadge" class="nav-badge" style="display:none;">0</span></a></li>
         <li><a href="#" class="menu-link" data-page="messages"><i class="fa-regular fa-envelope"></i>Messages<span id="messagesBadge" class="nav-badge blue" style="display:none;">0</span></a></li>
+        <li><a href="#" class="menu-link" data-page="compliance"><i class="fa-solid fa-scale-balanced"></i>Compliance</a></li>
         <li><a href="#" class="menu-link" data-page="logs"><i class="fa-regular fa-rectangle-list"></i>System Logs</a></li>
         <li><a href="#" class="menu-link" data-page="settings"><i class="fa-solid fa-gear"></i>Settings</a></li>
       </ul>
@@ -921,6 +922,15 @@
           <div class="card-header"><h2 class="section-title">Messages</h2></div>
           <div id="adminMessagesContainer" class="list-stack"><p class="placeholder-text">No messages yet.</p></div>
         </div>
+      </section>
+
+      <section id="compliance" class="page-section">
+        <div class="section-grid two-col">
+          <div class="card"><div class="card-header"><h2 class="section-title">Policy Versions</h2></div><div id="policyVersionsContainer"></div></div>
+          <div class="card"><div class="card-header"><h2 class="section-title">Consent Statistics</h2></div><div id="consentStatsContainer"></div></div>
+        </div>
+        <div class="card"><div class="card-header"><h2 class="section-title">Complaint Reports</h2></div><div id="complaintsContainer"></div></div>
+        <div class="card"><div class="card-header"><h2 class="section-title">Deletion Requests</h2></div><div id="deletionRequestsContainer"></div></div>
       </section>
 
       <section id="logs" class="page-section">
