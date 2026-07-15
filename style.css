@@ -1149,13 +1149,44 @@ footer{
 }
 .auth-policy-note{
   margin:.15rem 0 .25rem;
-  color:#475569;
+  color:#fff;
   font-size:.9rem;
   line-height:1.45;
 }
 .auth-policy-note a{
-  color:#0b56d0;
+  color:#fff;
   font-weight:800;
+  text-decoration:underline;
+  text-underline-offset:3px;
+}
+.auth-policy-note a:hover{
+  color:#dbeafe;
+}
+.hk-policy-modal{
+  width:min(760px, calc(100vw - 28px));
+  max-height:min(86vh, 820px);
+  display:flex;
+  flex-direction:column;
+}
+.hk-policy-modal .modal-header{
+  padding-bottom:.75rem;
+}
+.hk-policy-modal .modal-header p{
+  color:#64748b;
+}
+.hk-policy-modal-content{
+  overflow:auto;
+  padding-right:.35rem;
+  line-height:1.65;
+}
+.hk-policy-modal-content h3{
+  color:#0f172a;
+  font-size:1.05rem;
+  margin:1.1rem 0 .35rem;
+}
+.hk-policy-modal-content p{
+  color:#334155;
+  margin:0 0 .8rem;
 }
 .hk-policy-links{
   display:flex;

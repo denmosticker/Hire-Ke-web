@@ -38,6 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const roleModal = el('role-modal');
   const profileModal = el('profile-modal');
   const jobModal = el('job-modal');
+  const policyModal = el('policy-modal');
   const verificationModal = el('verification-modal');
   const verificationState = {
     email: '',
@@ -107,7 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function toggleModal(modal, show) {
     if (!modal) return;
     modal.classList.toggle('hidden', !show);
-    const anyOpen = [authModal, roleModal, profileModal, jobModal, verificationModal].some((item) => item && !item.classList.contains('hidden'));
+    const anyOpen = [authModal, roleModal, profileModal, jobModal, policyModal, verificationModal].some((item) => item && !item.classList.contains('hidden'));
     modalBackdrop?.classList.toggle('hidden', !anyOpen);
   }
 
@@ -1981,6 +1982,41 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  async function openPolicyModal(slug = 'privacy') {
+    const title = el('policy-modal-title');
+    const meta = el('policy-modal-meta');
+    const content = el('policy-modal-content');
+    if (!policyModal || !content) {
+      window.location.href = `/${slug}`;
+      return;
+    }
+    setText('policy-modal-title', slug === 'privacy' ? 'Data Protection & Privacy Policy' : 'Policy');
+    setText('policy-modal-meta', '');
+    content.replaceChildren(Object.assign(document.createElement('p'), { textContent: 'Loading policy...' }));
+    toggleModal(policyModal, true);
+    try {
+      const data = await fetchJson(`${API_BASE_URL}/legal/policies/${encodeURIComponent(slug)}`);
+      const policy = data.policy;
+      if (title) title.textContent = policy.title === 'Privacy Policy' ? 'Data Protection & Privacy Policy' : policy.title;
+      if (meta) meta.textContent = `Version ${policy.version} | Effective ${policy.effectiveDate} | Last updated ${policy.lastUpdated}`;
+      content.replaceChildren();
+      (policy.sections || []).forEach((section) => {
+        const wrapper = document.createElement('section');
+        const heading = document.createElement('h3');
+        heading.textContent = section.heading || '';
+        wrapper.appendChild(heading);
+        String(section.body || '').split(/\n+/).filter(Boolean).forEach((paragraph) => {
+          const p = document.createElement('p');
+          p.textContent = paragraph;
+          wrapper.appendChild(p);
+        });
+        content.appendChild(wrapper);
+      });
+    } catch (error) {
+      content.replaceChildren(Object.assign(document.createElement('p'), { textContent: error.message || 'Could not load policy.' }));
+    }
+  }
+
   async function handleAuthSubmit(event) {
     event.preventDefault();
     const form = event.currentTarget;
@@ -2395,8 +2431,16 @@ document.addEventListener('DOMContentLoaded', () => {
   el('role-close').addEventListener('click', () => toggleModal(roleModal, false));
   el('profile-close').addEventListener('click', () => toggleModal(profileModal, false));
   el('job-modal-close').addEventListener('click', () => toggleModal(jobModal, false));
+  el('policy-modal-close')?.addEventListener('click', () => toggleModal(policyModal, false));
   modalBackdrop.addEventListener('click', () => {
-    [authModal, roleModal, profileModal, jobModal, verificationModal].forEach((modal) => toggleModal(modal, false));
+    [authModal, roleModal, profileModal, jobModal, policyModal, verificationModal].forEach((modal) => toggleModal(modal, false));
+  });
+
+  document.querySelectorAll('[data-policy-modal]').forEach((link) => {
+    link.addEventListener('click', (event) => {
+      event.preventDefault();
+      openPolicyModal(link.dataset.policyModal || 'privacy');
+    });
   });
 
   document.querySelectorAll('.role-card').forEach((card) => {

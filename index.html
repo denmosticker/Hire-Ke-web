@@ -461,7 +461,7 @@
         </div>
         <button type="button" id="forgot-password-link" class="forgot-password-link">Forgot password?</button>
         <div id="auth-privacy-container" class="hk-consent-stack hidden">
-          <p class="auth-policy-note">Before creating an account, you can read HireKe's <a href="/privacy" target="_blank" rel="noopener">Data Protection & Privacy Policy</a>, <a href="/terms" target="_blank" rel="noopener">Terms</a>, and <a href="/candidate-data-consent" target="_blank" rel="noopener">CV Consent Notice</a>.</p>
+          <p class="auth-policy-note">Before creating an account, you can read HireKe's <a href="/privacy" data-policy-modal="privacy">Data Protection & Privacy Policy</a>, <a href="/terms" target="_blank" rel="noopener">Terms</a>, and <a href="/candidate-data-consent" target="_blank" rel="noopener">CV Consent Notice</a>.</p>
           <label class="toggle-row"><input id="auth-terms-agree" type="checkbox" />I agree to the <a href="/terms" target="_blank" rel="noopener">HireKe Terms of Service</a> and acknowledge the <a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a>.</label>
           <label class="toggle-row"><input id="auth-cv-consent" type="checkbox" />I consent to HireKe processing my CV and professional information to provide profile, application and opportunity-matching services.</label>
           <label class="toggle-row"><input id="auth-recruiter-visible" type="checkbox" />Allow registered recruiters to view my public professional profile.</label>
@@ -684,6 +684,21 @@
           <button id="job-modal-email" class="secondary-btn" type="button">Apply by email</button>
           <button id="job-modal-website" class="primary-btn" type="button">Save opportunity</button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="policy-modal" class="modal hidden">
+    <div class="modal-panel hk-policy-modal">
+      <div class="modal-panel-header">
+        <button id="policy-modal-close" class="modal-close" type="button">&times;</button>
+      </div>
+      <div class="modal-header">
+        <h2 id="policy-modal-title">Privacy Policy</h2>
+        <p id="policy-modal-meta"></p>
+      </div>
+      <div id="policy-modal-content" class="hk-policy-modal-content">
+        <p>Loading policy...</p>
       </div>
     </div>
   </div>
