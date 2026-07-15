@@ -152,7 +152,7 @@ async function findOpportunityDuplicates(body, excludeId = null) {
   }
 
   if (body.title && body.organization) {
-    clauses.push('(LOWER(title) = LOWER(?) AND LOWER(COALESCE(source_name, company_external, "")) = LOWER(?))');
+    clauses.push("(LOWER(title) = LOWER(?) AND LOWER(COALESCE(source_name, company_external, '')) = LOWER(?))");
     params.push(body.title, body.organization);
   }
 

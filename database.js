@@ -87,6 +87,49 @@ function removeDatetimeWrappers(sql) {
   return output;
 }
 
+function replaceEmptyDoubleQuotedStrings(sql) {
+  let output = '';
+  let quote = null;
+  for (let i = 0; i < sql.length; i += 1) {
+    const char = sql[i];
+    const next = sql[i + 1];
+
+    if (quote) {
+      output += char;
+      if (char === quote) {
+        if (next === quote) {
+          output += next;
+          i += 1;
+        } else {
+          quote = null;
+        }
+      }
+      continue;
+    }
+
+    if (char === "'") {
+      quote = char;
+      output += char;
+      continue;
+    }
+
+    if (char === '"' && next === '"') {
+      output += "''";
+      i += 1;
+      continue;
+    }
+
+    if (char === '"') {
+      quote = char;
+      output += char;
+      continue;
+    }
+
+    output += char;
+  }
+  return output;
+}
+
 function transformPostgresSql(inputSql) {
   let sql = String(inputSql || '').trim().replace(/;+\s*$/, '');
   const wasInsertOrIgnore = /INSERT\s+OR\s+IGNORE\s+INTO/i.test(sql);
@@ -94,6 +137,7 @@ function transformPostgresSql(inputSql) {
   sql = sql.replace(/\bDATETIME\b/gi, 'TIMESTAMP');
   sql = sql.replace(/\bREAL\b/gi, 'DOUBLE PRECISION');
   sql = sql.replace(/INSERT\s+OR\s+IGNORE\s+INTO/gi, 'INSERT INTO');
+  sql = replaceEmptyDoubleQuotedStrings(sql);
   sql = removeDatetimeWrappers(sql);
   if (/^INSERT\s+INTO\s+/i.test(sql) && !/\bRETURNING\b/i.test(sql)) {
     if (wasInsertOrIgnore && !/\bON\s+CONFLICT\b/i.test(sql)) {
