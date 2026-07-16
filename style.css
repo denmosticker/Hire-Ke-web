@@ -267,12 +267,18 @@ html[data-theme="dark"] .hk-card-apply-btn{
 }
 
 html[data-theme="dark"] .hk-card-view-btn,
+html[data-theme="dark"] .hk-card-share-btn,
 html[data-theme="dark"] .hk-badge,
 html[data-theme="dark"] .hk-icon-toggle,
 html[data-theme="dark"] .secondary-btn{
   background:#22304a !important;
-  border-color:#354763;
+  border-color:#354763 !important;
   color:#d7e7ff !important;
+}
+
+html[data-theme="dark"] .hk-card-share-btn:hover{
+  background:#2b3a58 !important;
+  color:#ffffff !important;
 }
 
 html[data-theme="dark"] .hk-company-logo{
@@ -855,6 +861,22 @@ html.auth-restoring #sidebar-signup{
   background:#ffe4e9;
   border-color:#ec4899;
   color:#be185d;
+}
+
+.share-btn{
+  background:#eef6ff;
+  border:1px solid #bfdbfe;
+  color:#1d4ed8;
+  padding:10px 14px;
+  border-radius:12px;
+  cursor:pointer;
+  font-size:14px;
+  transition:all 0.2s ease;
+}
+
+.share-btn:hover{
+  background:#dbeafe;
+  border-color:#2563eb;
 }
 
 .applied-badge{
@@ -2633,6 +2655,21 @@ password-toggle:focus{
 .hk-card-apply-btn{
   background:#071d49 !important;
   color:#fff !important;
+}
+
+.hk-card-share-btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  background:#f3f7fb !important;
+  color:#1c2b4e !important;
+  border:1px solid #dce7f4 !important;
+}
+
+.hk-card-share-btn:hover{
+  background:#e8f1fb !important;
+  color:#0b56d0 !important;
 }
 
 .hk-side-stack{

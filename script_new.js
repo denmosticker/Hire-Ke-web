@@ -213,6 +213,7 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
         <div class="job-card-actions">
           <button class="unlock-btn">View Details</button>
+          <button class="share-btn" title="Share job">Share</button>
           <button class="save-btn ${isSaved ? 'saved' : ''}" title="Save job">
             ${isSaved ? '❤️ Saved' : '🤍 Save'}
           </button>
@@ -222,6 +223,7 @@ document.addEventListener('DOMContentLoaded', () => {
       jobsContainer.appendChild(card);
 
       const viewBtn = card.querySelector('.unlock-btn');
+      const shareBtn = card.querySelector('.share-btn');
       const saveBtn = card.querySelector('.save-btn');
 
       viewBtn.addEventListener('click', () => {
@@ -230,6 +232,10 @@ document.addEventListener('DOMContentLoaded', () => {
           return;
         }
         openJobModal(job);
+      });
+
+      shareBtn.addEventListener('click', () => {
+        shareJob(job);
       });
 
       saveBtn.addEventListener('click', () => {
@@ -374,6 +380,46 @@ document.addEventListener('DOMContentLoaded', () => {
       position: 'right',
       style: { background: '#2563eb' },
     }).showToast();
+  }
+
+  function jobShareUrl(job) {
+    const url = new URL(window.location.origin + window.location.pathname);
+    if (job?.id) url.searchParams.set('job', job.id);
+    return url.toString();
+  }
+
+  async function copyText(value) {
+    if (navigator.clipboard?.writeText && window.isSecureContext) {
+      await navigator.clipboard.writeText(value);
+      return;
+    }
+    const textarea = document.createElement('textarea');
+    textarea.value = value;
+    textarea.setAttribute('readonly', '');
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    textarea.remove();
+  }
+
+  async function shareJob(job) {
+    const shareData = {
+      title: `${job.title || 'Job'} on HireKe`,
+      text: `${job.title || 'Job'} at ${job.company || 'HireKe'}`,
+      url: jobShareUrl(job),
+    };
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+        return;
+      }
+      await copyText(shareData.url);
+      showToast('Job link copied. You can now share it.');
+    } catch (error) {
+      if (error?.name !== 'AbortError') showToast('Could not share this job. Please try again.');
+    }
   }
 
   function handleAuthSubmit(event) {

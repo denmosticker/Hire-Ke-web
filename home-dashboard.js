@@ -147,6 +147,67 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  function jobShareUrl(job) {
+    const url = new URL(window.location.origin + window.location.pathname);
+    if (job?.id) url.searchParams.set('job', job.id);
+    return url.toString();
+  }
+
+  async function copyText(value) {
+    if (navigator.clipboard?.writeText && window.isSecureContext) {
+      await navigator.clipboard.writeText(value);
+      return;
+    }
+    const textarea = document.createElement('textarea');
+    textarea.value = value;
+    textarea.setAttribute('readonly', '');
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    textarea.remove();
+  }
+
+  async function shareOpportunity(job) {
+    if (!job) return;
+    const shareData = {
+      title: `${job.title || 'Opportunity'} on HireKe`,
+      text: `${job.title || 'Opportunity'} at ${job.company || 'HireKe partner'}`,
+      url: jobShareUrl(job),
+    };
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+        return;
+      }
+      await copyText(shareData.url);
+      showToast('Job link copied. You can now share it.');
+    } catch (error) {
+      if (error?.name === 'AbortError') return;
+      showToast('Could not share this job. Please try again.', true);
+    }
+  }
+
+  function allDashboardOpportunities() {
+    const dashboard = state.dashboard || {};
+    return [
+      ...(dashboard.opportunities || []),
+      ...(dashboard.recommended || []),
+      ...(dashboard.newOpportunities || []),
+      ...(dashboard.trending || []),
+      ...(dashboard.expiringSoon || []),
+      ...(state.savedOpportunities || []),
+    ];
+  }
+
+  function openSharedJobFromUrl() {
+    const jobId = new URLSearchParams(window.location.search).get('job');
+    if (!jobId || !state.dashboard) return;
+    const job = allDashboardOpportunities().find((item) => String(item.id) === String(jobId));
+    if (job) openJobModal(job);
+  }
+
   let selectedRole = null;
 
   function openRoleModal() {
@@ -469,6 +530,9 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="hk-opportunity-actions">
             <button class="hk-card-view-btn" type="button" data-job-id="${job.id}">View job</button>
             <button class="hk-card-apply-btn" type="button" data-apply-job-id="${job.id}">Apply</button>
+            <button class="hk-card-share-btn" type="button" title="Share job" aria-label="Share ${escapeHTML(job.title || 'job')}" data-share-job-id="${job.id}">
+              <i class="fa-solid fa-share-nodes"></i><span>Share</span>
+            </button>
           </div>
           <button class="hk-save-inline" type="button" aria-label="Save opportunity" data-save-job-id="${job.id}">
             <i class="${state.saved.has(job.id) || state.saved.has(String(job.id)) ? 'fa-solid' : 'fa-regular'} fa-bookmark"></i>
@@ -480,19 +544,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
     container.querySelectorAll('[data-job-id]').forEach((button) => {
       button.addEventListener('click', () => {
-        const job = state.dashboard.opportunities.find((item) => String(item.id) === String(button.dataset.jobId));
+        const job = allDashboardOpportunities().find((item) => String(item.id) === String(button.dataset.jobId));
         openJobModal(job);
       });
     });
     container.querySelectorAll('[data-apply-job-id]').forEach((button) => {
       button.addEventListener('click', () => {
-        const job = state.dashboard.opportunities.find((item) => String(item.id) === String(button.dataset.applyJobId));
+        const job = allDashboardOpportunities().find((item) => String(item.id) === String(button.dataset.applyJobId));
         openJobModal(job);
+      });
+    });
+    container.querySelectorAll('[data-share-job-id]').forEach((button) => {
+      button.addEventListener('click', async () => {
+        const job = allDashboardOpportunities().find((item) => String(item.id) === String(button.dataset.shareJobId));
+        await shareOpportunity(job);
       });
     });
     container.querySelectorAll('[data-save-job-id]').forEach((button) => {
       button.addEventListener('click', async () => {
-        const job = state.dashboard.opportunities.find((item) => String(item.id) === String(button.dataset.saveJobId));
+        const job = allDashboardOpportunities().find((item) => String(item.id) === String(button.dataset.saveJobId));
         await saveOpportunity(job, button);
       });
     });
@@ -1786,6 +1856,7 @@ document.addEventListener('DOMContentLoaded', () => {
     renderCategories();
     renderCompanies();
     renderSavedOpportunities();
+    openSharedJobFromUrl();
   }
 
   async function loadPersonalDashboard() {
