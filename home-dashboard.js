@@ -110,6 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
     modal.classList.toggle('hidden', !show);
     const anyOpen = [authModal, roleModal, profileModal, jobModal, policyModal, verificationModal].some((item) => item && !item.classList.contains('hidden'));
     modalBackdrop?.classList.toggle('hidden', !anyOpen);
+    document.body.classList.toggle('modal-open', anyOpen);
   }
 
   function authHeaders() {
@@ -329,8 +330,8 @@ document.addEventListener('DOMContentLoaded', () => {
     el('loginBtn').textContent = loggedIn ? 'Logout' : 'Log In';
     el('signupBtn').classList.toggle('hidden', loggedIn);
     el('profileBtn').classList.toggle('hidden', !loggedIn);
-    el('sidebar-login').classList.toggle('hidden', loggedIn);
-    el('sidebar-signup').classList.toggle('hidden', loggedIn);
+    el('sidebar-login')?.classList.toggle('hidden', loggedIn);
+    el('sidebar-signup')?.classList.toggle('hidden', loggedIn);
     el('open-recruiter-menu-btn')?.classList.toggle('hidden', !(loggedIn && state.user.role === 'recruiter'));
     el('home-create-profile-btn')?.classList.toggle('hidden', loggedIn);
 
@@ -2483,12 +2484,12 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   el('signupBtn').addEventListener('click', openRoleModal);
-  el('sidebar-login').addEventListener('click', (event) => {
+  el('sidebar-login')?.addEventListener('click', (event) => {
     event.preventDefault();
     if (state.user) logout();
     else openAuthModal('login');
   });
-  el('sidebar-signup').addEventListener('click', (event) => {
+  el('sidebar-signup')?.addEventListener('click', (event) => {
     event.preventDefault();
     openRoleModal();
   });
