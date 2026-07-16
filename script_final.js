@@ -345,7 +345,7 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
         <div class="job-card-actions">
           <button class="unlock-btn">View Details</button>
-          <button class="share-btn" title="Share job">Share</button>
+          <button class="share-btn" title="Share job" aria-label="Share job"><i class="fas fa-share-nodes" aria-hidden="true"></i></button>
           <button class="save-btn ${isSaved ? 'saved' : ''}" title="Save job">
             ${isSaved ? '❤️ Saved' : '🤍 Save'}
           </button>

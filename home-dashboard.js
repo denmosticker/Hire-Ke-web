@@ -532,7 +532,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <button class="hk-card-view-btn" type="button" data-job-id="${job.id}">View job</button>
             <button class="hk-card-apply-btn" type="button" data-apply-job-id="${job.id}">Apply</button>
             <button class="hk-card-share-btn" type="button" title="Share job" aria-label="Share ${escapeHTML(job.title || 'job')}" data-share-job-id="${job.id}">
-              <i class="fa-solid fa-share-nodes"></i><span>Share</span>
+              <i class="fa-solid fa-share-nodes" aria-hidden="true"></i>
             </button>
           </div>
           <button class="hk-save-inline" type="button" aria-label="Save opportunity" data-save-job-id="${job.id}">

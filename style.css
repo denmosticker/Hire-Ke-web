@@ -868,13 +868,17 @@ html.auth-restoring #signupBtn{
 }
 
 .share-btn{
+  display:inline-grid;
+  place-items:center;
   background:#eef6ff;
   border:1px solid #bfdbfe;
   color:#1d4ed8;
-  padding:10px 14px;
+  width:42px;
+  height:42px;
+  padding:0;
   border-radius:12px;
   cursor:pointer;
-  font-size:14px;
+  font-size:15px;
   transition:all 0.2s ease;
 }
 
@@ -2662,10 +2666,13 @@ password-toggle:focus{
 }
 
 .hk-card-share-btn{
-  display:inline-flex;
+  display:inline-grid;
   align-items:center;
   justify-content:center;
-  gap:6px;
+  width:40px;
+  min-width:40px;
+  height:40px;
+  padding:0 !important;
   background:#f3f7fb !important;
   color:#1c2b4e !important;
   border:1px solid #dce7f4 !important;
